@@ -73,6 +73,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     strategy: "jwt",
     maxAge: 7 * 24 * 60 * 60, // 7 days (1 week)
   },
+  trustHost: true,
   cookies: {
     sessionToken: {
       name: "getmaterials-admin-session",
