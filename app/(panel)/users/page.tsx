@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { HiOutlineUsers, HiOutlineSearch, HiOutlineShieldCheck, HiOutlineBan, HiOutlineTrash, HiOutlineCheckCircle } from "react-icons/hi";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import toast from "react-hot-toast";
 
 interface UserItem {
   _id: string;
@@ -43,9 +44,13 @@ export default function AdminUsersPage() {
         setUsers((prev) =>
           prev.map((u) => (u._id === id ? data.user : u))
         );
+        toast.success("User updated successfully");
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to update user");
       }
     } catch {
-      // Handle error
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setUpdating(null);
     }
@@ -54,8 +59,15 @@ export default function AdminUsersPage() {
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
-      await fetch(`/api/users?id=${deleteId}`, { method: "DELETE" });
-      setUsers((prev) => prev.filter((u) => u._id !== deleteId));
+      const res = await fetch(`/api/users?id=${deleteId}`, { method: "DELETE" });
+      if (res.ok) {
+        setUsers((prev) => prev.filter((u) => u._id !== deleteId));
+        toast.success("User deleted");
+      } else {
+        toast.error("Failed to delete user");
+      }
+    } catch {
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setDeleteId(null);
     }

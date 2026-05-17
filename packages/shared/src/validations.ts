@@ -44,6 +44,8 @@ export const createMaterialSchema = z.object({
   title: z.string().min(2, "Title is required").max(200),
   description: z.string().max(1000).optional(),
   type: z.enum(["pdf", "video", "link", "image", "assignment"]),
+  materialCategory: z.enum(["notes", "question_paper", "syllabus", "assignment", "lab_manual", "reference", "other"]).default("notes"),
+  program: z.enum(["btech", "mtech", "mca", "bca", "bsc", "msc", "mba", "bba", "diploma", "phd", "other"]).default("btech"),
   chapter: z.string().min(1, "Chapter is required"),
   subject: z.string().min(1, "Subject is required"),
   college: z.string().optional(),
@@ -111,7 +113,7 @@ export const createFeedbackSchema = z.object({
 export const contactSchema = z.object({
   name: z.string().min(2, "Name is required").max(100),
   email: z.string().email("Invalid email address"),
-  subject: z.string().min(2, "Subject is required").max(200),
+  subject: z.string().max(200).optional(),
   message: z.string().min(10, "Message must be at least 10 characters").max(2000),
 });
 

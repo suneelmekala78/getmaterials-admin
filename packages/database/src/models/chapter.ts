@@ -7,7 +7,7 @@ export interface IChapter extends Document {
   order: number;
   subject: mongoose.Types.ObjectId;
   materialsCount: number;
-  createdBy: mongoose.Types.ObjectId;
+  createdBy?: mongoose.Types.ObjectId;
   createdAt: Date;
 }
 
@@ -19,7 +19,7 @@ const ChapterSchema = new Schema<IChapter>(
     order: { type: Number, default: 0 },
     subject: { type: Schema.Types.ObjectId, ref: "Subject", required: true },
     materialsCount: { type: Number, default: 0 },
-    createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    createdBy: { type: Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: true }
 );

@@ -14,6 +14,8 @@ export interface IMaterial extends Document {
   description?: string;
   slug: string;
   type: "pdf" | "video" | "link" | "image" | "assignment";
+  materialCategory: "notes" | "question_paper" | "syllabus" | "assignment" | "lab_manual" | "reference" | "other";
+  program: "btech" | "mtech" | "mca" | "bca" | "bsc" | "msc" | "mba" | "bba" | "diploma" | "phd" | "other";
   chapter: mongoose.Types.ObjectId;
   subject: mongoose.Types.ObjectId;
   uploadedBy: mongoose.Types.ObjectId;
@@ -46,6 +48,16 @@ const MaterialSchema = new Schema<IMaterial>(
       type: String,
       enum: ["pdf", "video", "link", "image", "assignment"],
       required: true,
+    },
+    materialCategory: {
+      type: String,
+      enum: ["notes", "question_paper", "syllabus", "assignment", "lab_manual", "reference", "other"],
+      default: "notes",
+    },
+    program: {
+      type: String,
+      enum: ["btech", "mtech", "mca", "bca", "bsc", "msc", "mba", "bba", "diploma", "phd", "other"],
+      default: "btech",
     },
     chapter: { type: Schema.Types.ObjectId, ref: "Chapter", required: true },
     subject: { type: Schema.Types.ObjectId, ref: "Subject", required: true },

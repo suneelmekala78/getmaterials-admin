@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { HiOutlineStar, HiOutlineTrash, HiOutlineCheck, HiOutlineBan } from "react-icons/hi";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import toast from "react-hot-toast";
 
 interface Review {
   _id: string;
@@ -39,17 +40,27 @@ export default function AdminReviewsPage() {
         setReviews((prev) =>
           prev.map((r) => (r._id === id ? { ...r, isApproved } : r))
         );
+        toast.success(isApproved ? "Review approved" : "Review hidden");
+      } else {
+        toast.error("Failed to update review");
       }
     } catch {
-      // Handle error
+      toast.error("Something went wrong. Please try again.");
     }
   };
 
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
-      await fetch(`/api/reviews?id=${deleteId}`, { method: "DELETE" });
-      setReviews((prev) => prev.filter((r) => r._id !== deleteId));
+      const res = await fetch(`/api/reviews?id=${deleteId}`, { method: "DELETE" });
+      if (res.ok) {
+        setReviews((prev) => prev.filter((r) => r._id !== deleteId));
+        toast.success("Review deleted");
+      } else {
+        toast.error("Failed to delete review");
+      }
+    } catch {
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setDeleteId(null);
     }

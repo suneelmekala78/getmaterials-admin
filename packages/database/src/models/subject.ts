@@ -9,7 +9,7 @@ export interface ISubject extends Document {
   category: "science" | "arts" | "engineering" | "commerce" | "medical" | "law" | "general";
   isActive: boolean;
   materialsCount: number;
-  createdBy: mongoose.Types.ObjectId;
+  createdBy?: mongoose.Types.ObjectId;
   createdAt: Date;
 }
 
@@ -27,7 +27,7 @@ const SubjectSchema = new Schema<ISubject>(
     },
     isActive: { type: Boolean, default: true },
     materialsCount: { type: Number, default: 0 },
-    createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    createdBy: { type: Schema.Types.ObjectId, ref: "User" },
   },
   { timestamps: true }
 );

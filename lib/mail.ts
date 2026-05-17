@@ -18,7 +18,12 @@ const transporter = nodemailer.createTransport({
 const FROM_EMAIL = process.env.RESEND_FROM || `GetMaterials Admin <${process.env.SMTP_USER}>`;
 
 const otpHtml = (otp: string) => `
-  <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto; padding: 32px; border-radius: 12px; border: 1px solid #e2e8f0;">
+  <div style="font-family: 'Inter', -apple-system, sans-serif; max-width: 400px; margin: 0 auto; padding: 32px; border-radius: 12px; border: 1px solid #e2e8f0; background: #ffffff;">
+    <div style="text-align: center; margin-bottom: 20px;">
+      <h1 style="font-size: 24px; font-weight: 800; margin: 0; letter-spacing: -0.5px;">
+        <span style="color: #7c3aed;">Get</span><span style="color: #1e293b;">Materials</span>
+      </h1>
+    </div>
     <h2 style="margin: 0 0 8px; color: #1a1a1a;">Admin Login OTP</h2>
     <p style="color: #64748b; margin: 0 0 24px;">Use this code to login to the GetMaterials admin panel.</p>
     <div style="background: #f1f5f9; border-radius: 8px; padding: 16px; text-align: center; margin-bottom: 24px;">

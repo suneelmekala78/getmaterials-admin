@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { HiOutlinePlus, HiOutlineTrash, HiOutlineEye } from "react-icons/hi";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import toast from "react-hot-toast";
 
 interface Poll {
   _id: string;
@@ -58,7 +59,7 @@ export default function PollsPage() {
       const data = await res.json();
       setPolls(data.polls || []);
     } catch {
-      // Handle error
+      toast.error("Failed to load polls");
     } finally {
       setLoading(false);
     }
@@ -71,9 +72,11 @@ export default function PollsPage() {
       const data = await res.json();
       if (res.ok) {
         setViewPoll(data.poll);
+      } else {
+        toast.error("Failed to load poll responses");
       }
     } catch {
-      // Handle error
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setViewLoading(false);
     }
@@ -117,8 +120,15 @@ export default function PollsPage() {
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
-      await fetch(`/api/polls/${deleteId}`, { method: "DELETE" });
-      setPolls((prev) => prev.filter((p) => p._id !== deleteId));
+      const res = await fetch(`/api/polls/${deleteId}`, { method: "DELETE" });
+      if (res.ok) {
+        setPolls((prev) => prev.filter((p) => p._id !== deleteId));
+        toast.success("Poll deleted");
+      } else {
+        toast.error("Failed to delete poll");
+      }
+    } catch {
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setDeleteId(null);
     }
@@ -135,7 +145,7 @@ export default function PollsPage() {
         prev.map((p) => (p._id === id ? { ...p, isActive: !isActive } : p))
       );
     } catch {
-      // Handle error
+      toast.error("Failed to update poll status");
     }
   };
 

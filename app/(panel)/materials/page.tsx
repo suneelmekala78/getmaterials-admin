@@ -27,9 +27,8 @@ export default async function AdminMaterialsPage() {
 
   const statusConfig: Record<string, string> = {
     published: "bg-emerald-50 text-emerald-700",
-    pending: "bg-amber-50 text-amber-700",
+    under_review: "bg-amber-50 text-amber-700",
     draft: "bg-slate-100 text-slate-600",
-    rejected: "bg-red-50 text-red-700",
   };
 
   return (
@@ -64,8 +63,8 @@ export default async function AdminMaterialsPage() {
         <select className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-600 focus:outline-none focus:border-violet-500">
           <option value="">All Status</option>
           <option value="published">Published</option>
-          <option value="pending">Pending</option>
-          <option value="rejected">Rejected</option>
+          <option value="under_review">Under Review</option>
+          <option value="draft">Draft</option>
         </select>
       </div>
 
@@ -114,7 +113,7 @@ export default async function AdminMaterialsPage() {
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-1.5 text-sm text-slate-600">
                         <Eye className="w-3.5 h-3.5 text-slate-400" />
-                        {material.viewCount || 0}
+                        {material.views || 0}
                       </div>
                     </td>
                     <td className="px-5 py-4 text-right">

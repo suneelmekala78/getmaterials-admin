@@ -11,7 +11,7 @@ const AdminTopbar = () => {
         <button className="text-xl text-gray-600 hover:text-black">
           <HiOutlineBell />
         </button>
-        <a href="/" target="_blank" className="text-sm font-semibold text-[var(--primary)]">
+        <a href={process.env.NEXT_PUBLIC_SITE_URL || "https://getmaterials.in"} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-[var(--primary)]">
           View Site
         </a>
         <div className="w-8 h-8 rounded-full bg-[var(--primary)] text-white flex items-center justify-center font-bold">

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Mail, ShieldCheck, Loader2, ArrowLeft } from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -34,6 +35,7 @@ export default function AdminLoginPage() {
       setStep("otp");
     } catch (err: any) {
       setError(err.message);
+      toast.error(err.message);
     } finally {
       setLoading(false);
     }
@@ -53,6 +55,7 @@ export default function AdminLoginPage() {
 
       if (result?.error) {
         setError("Invalid or expired OTP. Please try again.");
+        toast.error("Invalid or expired OTP. Please try again.");
         return;
       }
 

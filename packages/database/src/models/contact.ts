@@ -29,6 +29,7 @@ export const ContactMessage =
 // ============ SITE FEEDBACK (public, no auth required) ============
 export interface ISiteFeedback extends Document {
   name: string;
+  email: string;
   rating: number;
   message: string;
   isApproved: boolean;
@@ -38,6 +39,7 @@ export interface ISiteFeedback extends Document {
 const SiteFeedbackSchema = new Schema<ISiteFeedback>(
   {
     name: { type: String, required: true, trim: true },
+    email: { type: String, required: true, trim: true, lowercase: true },
     rating: { type: Number, required: true, min: 1, max: 5 },
     message: { type: String, required: true, maxlength: 1000 },
     isApproved: { type: Boolean, default: false },

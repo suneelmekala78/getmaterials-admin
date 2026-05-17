@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { HiOutlinePlus, HiOutlineTrash } from "react-icons/hi";
+import toast from "react-hot-toast";
 
 interface Question {
   question: string;
@@ -31,7 +32,9 @@ export default function CreateQuizPage() {
     fetch("/api/subjects")
       .then((r) => r.json())
       .then((d) => setSubjects(d.subjects || []))
-      .catch(() => {});
+      .catch(() => {
+        toast.error("Failed to load subjects");
+      });
   }, []);
 
   useEffect(() => {
@@ -39,7 +42,9 @@ export default function CreateQuizPage() {
       fetch(`/api/chapters?subject=${subjectId}`)
         .then((r) => r.json())
         .then((d) => setChapters(d.chapters || []))
-        .catch(() => {});
+        .catch(() => {
+          toast.error("Failed to load chapters");
+        });
     } else {
       setChapters([]);
     }

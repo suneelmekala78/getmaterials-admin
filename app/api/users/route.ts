@@ -92,8 +92,12 @@ export async function DELETE(req: NextRequest) {
 
     await connectDB();
 
-    // Prevent self-deletion
-    if (id === (session.user as any).id) {
+    // Prevent self-deletion (admin session ID is email, not ObjectId)
+    const targetUser = await User.findById(id).select("email").lean();
+    if (!targetUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+    if ((targetUser as any).email === session.user.email) {
       return NextResponse.json({ error: "Cannot delete yourself" }, { status: 400 });
     }
 

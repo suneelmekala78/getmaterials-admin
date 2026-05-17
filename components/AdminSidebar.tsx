@@ -18,12 +18,16 @@ import {
   HiOutlinePuzzle,
   HiOutlineSpeakerphone,
   HiOutlineStar,
+  HiOutlineMail,
+  HiOutlineChatAlt2,
+  HiOutlineCollection,
 } from "react-icons/hi";
 
 const links = [
   { name: "Dashboard", href: "/dashboard", icon: HiOutlineHome },
   { name: "Materials", href: "/materials", icon: HiOutlineDocumentText },
   { name: "Subjects", href: "/subjects", icon: HiOutlineBookOpen },
+  { name: "Chapters", href: "/chapters", icon: HiOutlineCollection },
   { name: "Quizzes", href: "/quizzes", icon: HiOutlinePuzzle },
   { name: "Polls", href: "/polls", icon: HiOutlineSpeakerphone },
   { name: "Reviews", href: "/reviews", icon: HiOutlineStar },
@@ -31,6 +35,8 @@ const links = [
   { name: "Users", href: "/users", icon: HiOutlineUsers },
   { name: "Colleges", href: "/colleges", icon: HiOutlineAcademicCap },
   { name: "Donations", href: "/donations", icon: HiOutlineCash },
+  { name: "Feedback", href: "/feedback", icon: HiOutlineChatAlt2 },
+  { name: "Contacts", href: "/contacts", icon: HiOutlineMail },
   { name: "Settings", href: "/settings", icon: HiOutlineCog },
 ];
 

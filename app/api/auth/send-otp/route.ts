@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB, Otp } from "@getmaterials/database";
 import { sendOtpEmail } from "@/lib/mail";
+import { rateLimit } from "@/lib/rate-limit";
 import crypto from "crypto";
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "")
@@ -10,6 +11,14 @@ const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "")
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    if (!rateLimit(`send-otp:${ip}`, 5, 60_000)) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     const { email } = await req.json();
     const normalizedEmail = email?.toLowerCase().trim();
 

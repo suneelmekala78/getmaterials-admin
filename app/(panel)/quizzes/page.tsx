@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { HiOutlinePlus, HiOutlineTrash, HiOutlinePencil, HiOutlineEye } from "react-icons/hi";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import toast from "react-hot-toast";
 
 interface Quiz {
   _id: string;
@@ -54,7 +55,7 @@ export default function QuizzesPage() {
       const data = await res.json();
       setQuizzes(data.quizzes || []);
     } catch {
-      // Handle error
+      toast.error("Failed to load quizzes");
     } finally {
       setLoading(false);
     }
@@ -63,10 +64,15 @@ export default function QuizzesPage() {
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
-      await fetch(`/api/quizzes/${deleteId}`, { method: "DELETE" });
-      setQuizzes((prev) => prev.filter((q) => q._id !== deleteId));
+      const res = await fetch(`/api/quizzes/${deleteId}`, { method: "DELETE" });
+      if (res.ok) {
+        setQuizzes((prev) => prev.filter((q) => q._id !== deleteId));
+        toast.success("Quiz deleted");
+      } else {
+        toast.error("Failed to delete quiz");
+      }
     } catch {
-      // Handle error
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setDeleteId(null);
     }
@@ -83,7 +89,7 @@ export default function QuizzesPage() {
         prev.map((q) => (q._id === id ? { ...q, isActive: !isActive } : q))
       );
     } catch {
-      // Handle error
+      toast.error("Failed to update quiz status");
     }
   };
 
@@ -99,7 +105,7 @@ export default function QuizzesPage() {
         setAttemptStats(data.stats || null);
       }
     } catch {
-      // Handle error
+      toast.error("Failed to load quiz responses");
     } finally {
       setAttemptsLoading(false);
     }

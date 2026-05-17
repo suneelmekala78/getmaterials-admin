@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Globe, Bell, Shield, Save } from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState({
@@ -25,7 +26,9 @@ export default function AdminSettingsPage() {
           setSettings((prev) => ({ ...prev, ...data.settings }));
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        toast.error("Failed to load settings");
+      });
   }, []);
 
   const handleSave = async () => {
@@ -40,8 +43,10 @@ export default function AdminSettingsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setMessage("Settings saved successfully!");
+      toast.success("Settings saved successfully!");
     } catch {
       setMessage("Failed to save settings.");
+      toast.error("Failed to save settings");
     } finally {
       setSaving(false);
       setTimeout(() => setMessage(""), 3000);

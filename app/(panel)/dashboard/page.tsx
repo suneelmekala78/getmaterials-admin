@@ -22,6 +22,7 @@ export default async function AdminDashboardPage() {
     totalSubjects,
     pendingTeachers,
     totalDonations,
+    totalDownloads,
     recentUsers,
   ] = await Promise.all([
     User.countDocuments(),
@@ -32,10 +33,14 @@ export default async function AdminDashboardPage() {
       { $match: { status: "completed" } },
       { $group: { _id: null, total: { $sum: "$amount" } } },
     ]),
+    Material.aggregate([
+      { $group: { _id: null, total: { $sum: "$downloads" } } },
+    ]),
     User.find().sort({ createdAt: -1 }).limit(5).lean(),
   ]);
 
   const donationTotal = totalDonations[0]?.total || 0;
+  const downloadsTotal = totalDownloads[0]?.total || 0;
 
   const stats = [
     { icon: Users, label: "Total Users", value: totalUsers, color: "text-blue-600 bg-blue-50", href: "/users" },
@@ -43,7 +48,7 @@ export default async function AdminDashboardPage() {
     { icon: BookOpen, label: "Subjects", value: totalSubjects, color: "text-emerald-600 bg-emerald-50", href: "/subjects" },
     { icon: Clock, label: "Pending Teachers", value: pendingTeachers, color: "text-amber-600 bg-amber-50", href: "/teachers" },
     { icon: Heart, label: "Total Donations", value: `₹${donationTotal.toLocaleString()}`, color: "text-pink-600 bg-pink-50", href: "/donations" },
-    { icon: Download, label: "Total Downloads", value: "—", color: "text-cyan-600 bg-cyan-50", href: "/materials" },
+    { icon: Download, label: "Total Downloads", value: downloadsTotal.toLocaleString(), color: "text-cyan-600 bg-cyan-50", href: "/materials" },
   ];
 
   return (

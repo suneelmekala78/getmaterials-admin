@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Building2, Plus, Trash2, MapPin } from "lucide-react";
+import { Building2, Plus, Trash2, MapPin, Pencil, X } from "lucide-react";
 
 interface College {
   _id: string;
@@ -13,6 +13,7 @@ interface College {
 
 export default function AdminCollegesPage() {
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
   const [code, setCode] = useState("");
@@ -34,24 +35,44 @@ export default function AdminCollegesPage() {
 
   useEffect(() => { fetchColleges(); }, []);
 
+  const resetForm = () => {
+    setName("");
+    setLocation("");
+    setCode("");
+    setEditingId(null);
+    setShowForm(false);
+    setError("");
+  };
+
+  const startEdit = (c: College) => {
+    setEditingId(c._id);
+    setName(c.name);
+    setLocation(c.location || "");
+    setCode(c.code);
+    setShowForm(true);
+    setError("");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     try {
+      const method = editingId ? "PATCH" : "POST";
+      const body = editingId
+        ? { id: editingId, name, location, code }
+        : { name, location, code };
+
       const res = await fetch("/api/colleges", {
-        method: "POST",
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, location, code }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setName("");
-      setLocation("");
-      setCode("");
-      setShowForm(false);
+      resetForm();
       fetchColleges();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create college");
+      setError(err instanceof Error ? err.message : "Failed to save college");
     }
   };
 
@@ -73,7 +94,7 @@ export default function AdminCollegesPage() {
           <p className="text-slate-500 mt-1">Manage registered educational institutions.</p>
         </div>
         <button
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => { resetForm(); setShowForm(!showForm); }}
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-violet-600 text-white font-medium text-sm rounded-xl hover:bg-violet-700 transition-colors"
         >
           <Plus className="w-4 h-4" />
@@ -81,10 +102,13 @@ export default function AdminCollegesPage() {
         </button>
       </div>
 
-      {/* Add college form */}
+      {/* Add/Edit college form */}
       {showForm && (
         <div className="bg-white rounded-2xl p-6 border border-slate-100">
-          <h2 className="text-base font-semibold text-slate-900 mb-4">Add New College</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold text-slate-900">{editingId ? "Edit College" : "Add New College"}</h2>
+            <button onClick={resetForm} className="p-1 text-slate-400 hover:text-slate-600 rounded"><X className="w-4 h-4" /></button>
+          </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
@@ -124,11 +148,11 @@ export default function AdminCollegesPage() {
                 type="submit"
                 className="px-5 py-2.5 bg-violet-600 text-white font-medium text-sm rounded-xl hover:bg-violet-700 transition-colors"
               >
-                Save College
+                {editingId ? "Update College" : "Save College"}
               </button>
               <button
                 type="button"
-                onClick={() => setShowForm(false)}
+                onClick={resetForm}
                 className="px-5 py-2.5 text-slate-600 font-medium text-sm border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
               >
                 Cancel
@@ -163,7 +187,13 @@ export default function AdminCollegesPage() {
                   <td className="px-6 py-4 text-slate-500 flex items-center gap-1">
                     {c.location && <><MapPin className="w-3 h-3" />{c.location}</>}
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-6 py-4 text-right flex items-center justify-end gap-1">
+                    <button
+                      onClick={() => startEdit(c)}
+                      className="p-1.5 text-slate-400 hover:text-violet-600 rounded-lg hover:bg-violet-50 transition-colors"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
                     <button
                       onClick={() => handleDelete(c._id)}
                       className="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
