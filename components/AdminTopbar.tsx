@@ -115,7 +115,3 @@ const AdminTopbar = () => {
 };
 
 export default AdminTopbar;
-  );
-};
-
-export default AdminTopbar;
