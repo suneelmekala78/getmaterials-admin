@@ -21,6 +21,7 @@ import {
   HiOutlineMail,
   HiOutlineChatAlt2,
   HiOutlineCollection,
+  HiOutlineClipboardList,
 } from "react-icons/hi";
 
 const links = [
@@ -28,12 +29,13 @@ const links = [
   { name: "Materials", href: "/materials", icon: HiOutlineDocumentText },
   { name: "Subjects", href: "/subjects", icon: HiOutlineBookOpen },
   { name: "Chapters", href: "/chapters", icon: HiOutlineCollection },
+  { name: "Colleges", href: "/colleges", icon: HiOutlineAcademicCap },
+  { name: "College Assigns", href: "/college-assignments", icon: HiOutlineClipboardList },
   { name: "Quizzes", href: "/quizzes", icon: HiOutlinePuzzle },
   { name: "Polls", href: "/polls", icon: HiOutlineSpeakerphone },
   { name: "Reviews", href: "/reviews", icon: HiOutlineStar },
   { name: "Teachers", href: "/teachers", icon: HiOutlineUserGroup },
   { name: "Users", href: "/users", icon: HiOutlineUsers },
-  { name: "Colleges", href: "/colleges", icon: HiOutlineAcademicCap },
   { name: "Donations", href: "/donations", icon: HiOutlineCash },
   { name: "Feedback", href: "/feedback", icon: HiOutlineChatAlt2 },
   { name: "Contacts", href: "/contacts", icon: HiOutlineMail },

@@ -12,7 +12,7 @@ const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "")
 export async function POST(req: NextRequest) {
   try {
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-    if (!rateLimit(`send-otp:${ip}`, 5, 60_000)) {
+    if (!(await rateLimit(`send-otp:${ip}`, 5, 60_000))) {
       return NextResponse.json(
         { error: "Too many requests. Please try again later." },
         { status: 429 }

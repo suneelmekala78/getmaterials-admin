@@ -253,6 +253,11 @@ export default function ChaptersPage() {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">Order</label>
                 <input type="number" value={newOrder} onChange={(e) => setNewOrder(Number(e.target.value))} min={0} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500" />
+                {newSubject && chapters.some((c) => (c.subject as any)?._id === newSubject && c.order === newOrder) && (
+                  <p className="mt-1.5 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
+                    ⚠️ Another chapter in this subject already uses order {newOrder}. Chapters with the same order will appear in no guaranteed sequence.
+                  </p>
+                )}
               </div>
               <div className="flex gap-3 pt-2">
                 <button onClick={() => setShowCreate(false)} className="flex-1 px-4 py-2.5 text-sm font-medium text-slate-700 border border-slate-200 rounded-xl hover:bg-slate-50">Cancel</button>
@@ -284,6 +289,11 @@ export default function ChaptersPage() {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">Order</label>
                 <input type="number" value={newOrder} onChange={(e) => setNewOrder(Number(e.target.value))} min={0} className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500" />
+                {editChapter && chapters.some((c) => c._id !== editChapter._id && (c.subject as any)?._id === (editChapter.subject as any)?._id && c.order === newOrder) && (
+                  <p className="mt-1.5 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
+                    ⚠️ Another chapter in this subject already uses order {newOrder}. Chapters with the same order will appear in no guaranteed sequence.
+                  </p>
+                )}
               </div>
               <div className="flex gap-3 pt-2">
                 <button onClick={() => setEditChapter(null)} className="flex-1 px-4 py-2.5 text-sm font-medium text-slate-700 border border-slate-200 rounded-xl hover:bg-slate-50">Cancel</button>

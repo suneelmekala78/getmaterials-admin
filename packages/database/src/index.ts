@@ -1,6 +1,7 @@
 export { connectDB } from "./connection";
 export { User, type IUser } from "./models/user";
 export { College, type ICollege } from "./models/college";
+export { CollegeAssignment, type ICollegeAssignment } from "./models/college-assignment";
 export { Subject, type ISubject } from "./models/subject";
 export { Chapter, type IChapter } from "./models/chapter";
 export { Material, type IMaterial, type IAttachment } from "./models/material";
@@ -23,3 +24,4 @@ export { Setting, type ISetting } from "./models/setting";
 export { Otp, type IOtp } from "./models/otp";
 export { Poll, type IPoll } from "./models/poll";
 export { Review, type IReview } from "./models/review";
+export { RoleChangeRequest, type IRoleChangeRequest } from "./models/role-change-request";

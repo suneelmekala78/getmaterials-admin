@@ -16,15 +16,14 @@ export interface IMaterial extends Document {
   type: "pdf" | "video" | "link" | "image" | "assignment";
   materialCategory: "notes" | "question_paper" | "syllabus" | "assignment" | "lab_manual" | "reference" | "other";
   program: "btech" | "mtech" | "mca" | "bca" | "bsc" | "msc" | "mba" | "bba" | "diploma" | "phd" | "other";
+  branch?: string;
+  semester?: number;
   chapter: mongoose.Types.ObjectId;
   subject: mongoose.Types.ObjectId;
   uploadedBy: mongoose.Types.ObjectId;
   college?: mongoose.Types.ObjectId;
-  fileUrl?: string;
-  externalUrl?: string;
+  batch?: string;
   thumbnailUrl?: string;
-  fileSize?: number;
-  mimeType?: string;
   attachments: IAttachment[];
   tags: string[];
   views: number;
@@ -59,15 +58,14 @@ const MaterialSchema = new Schema<IMaterial>(
       enum: ["btech", "mtech", "mca", "bca", "bsc", "msc", "mba", "bba", "diploma", "phd", "other"],
       default: "btech",
     },
+    branch: { type: String, trim: true, uppercase: true },
+    semester: { type: Number, min: 1, max: 10 },
     chapter: { type: Schema.Types.ObjectId, ref: "Chapter", required: true },
     subject: { type: Schema.Types.ObjectId, ref: "Subject", required: true },
     uploadedBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
     college: { type: Schema.Types.ObjectId, ref: "College" },
-    fileUrl: { type: String },
-    externalUrl: { type: String },
+    batch: { type: String, trim: true },
     thumbnailUrl: { type: String },
-    fileSize: { type: Number },
-    mimeType: { type: String },
     attachments: [
       {
         type: {
@@ -104,6 +102,7 @@ MaterialSchema.index({ uploadedBy: 1 });
 MaterialSchema.index({ type: 1, status: 1 });
 MaterialSchema.index({ tags: 1 });
 MaterialSchema.index({ slug: 1 }, { unique: true });
+MaterialSchema.index({ college: 1, program: 1, branch: 1, semester: 1 });
 MaterialSchema.index({ title: "text", description: "text", tags: "text" });
 
 export const Material =

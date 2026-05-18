@@ -1,36 +1,54 @@
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 
-// Clean up expired entries periodically
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of rateLimitMap) {
-    if (now > entry.resetAt) {
-      rateLimitMap.delete(key);
-    }
+let redis: Redis | null = null;
+
+function getRedis(): Redis | null {
+  if (redis) return redis;
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token || !url.startsWith("https://")) return null;
+  redis = new Redis({ url, token });
+  return redis;
+}
+
+const limiters = new Map<string, Ratelimit>();
+
+function getLimiter(limit: number, windowMs: number): Ratelimit | null {
+  const client = getRedis();
+  if (!client) return null;
+
+  const key = `${limit}:${windowMs}`;
+  if (!limiters.has(key)) {
+    limiters.set(
+      key,
+      new Ratelimit({
+        redis: client,
+        limiter: Ratelimit.slidingWindow(limit, `${windowMs} ms`),
+        prefix: "ratelimit:admin",
+      })
+    );
   }
-}, 60_000);
+  return limiters.get(key)!;
+}
 
 /**
- * Simple in-memory rate limiter.
+ * Redis-backed rate limiter using Upstash.
  * Returns true if the request is allowed, false if rate-limited.
+ * Falls back to allowing all requests if Redis is unavailable.
  */
-export function rateLimit(
+export async function rateLimit(
   key: string,
   limit: number,
   windowMs: number
-): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(key);
+): Promise<boolean> {
+  const limiter = getLimiter(limit, windowMs);
+  if (!limiter) return true;
 
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(key, { count: 1, resetAt: now + windowMs });
+  try {
+    const { success } = await limiter.limit(key);
+    return success;
+  } catch {
     return true;
   }
-
-  if (entry.count >= limit) {
-    return false;
-  }
-
-  entry.count++;
-  return true;
 }

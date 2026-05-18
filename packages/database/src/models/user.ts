@@ -8,6 +8,7 @@ export interface IUser extends Document {
   role: "student" | "teacher" | "college_admin" | "admin";
   status: "active" | "pending" | "suspended";
   college?: mongoose.Types.ObjectId;
+  assignedColleges: mongoose.Types.ObjectId[];
   bio?: string;
   qualifications?: string;
   bookmarks: mongoose.Types.ObjectId[];
@@ -42,6 +43,7 @@ const UserSchema = new Schema<IUser>(
       default: "active",
     },
     college: { type: Schema.Types.ObjectId, ref: "College" },
+    assignedColleges: [{ type: Schema.Types.ObjectId, ref: "College" }],
     bio: { type: String, maxlength: 500 },
     qualifications: { type: String, maxlength: 500 },
     bookmarks: [{ type: Schema.Types.ObjectId, ref: "Material" }],

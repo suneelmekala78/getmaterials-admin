@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { name, location, code } = body;
+    const { name, location, code, logo, description } = body;
 
     if (!name || !code) {
       return NextResponse.json({ error: "Name and code are required." }, { status: 400 });
@@ -42,7 +42,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "A college with this code already exists." }, { status: 409 });
     }
 
-    const college = await College.create({ name, location, code: code.toUpperCase() });
+    const collegeData: any = { name, location, code: code.toUpperCase() };
+    if (logo) collegeData.logo = logo;
+    if (description) collegeData.description = description;
+
+    const college = await College.create(collegeData);
     return NextResponse.json({ message: "College created", college });
   } catch {
     return NextResponse.json({ error: "Failed to create college" }, { status: 500 });
@@ -58,7 +62,7 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json();
-    const { id, name, location, code } = body;
+    const { id, name, location, code, logo, description } = body;
 
     if (!id) {
       return NextResponse.json({ error: "College ID required" }, { status: 400 });
@@ -74,9 +78,13 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "A college with this code already exists." }, { status: 409 });
     }
 
+    const updateData: any = { name, location, code: code.toUpperCase() };
+    if (logo !== undefined) updateData.logo = logo;
+    if (description !== undefined) updateData.description = description;
+
     const college = await College.findByIdAndUpdate(
       id,
-      { name, location, code: code.toUpperCase() },
+      updateData,
       { new: true }
     );
 
