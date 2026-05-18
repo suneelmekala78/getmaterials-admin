@@ -32,6 +32,7 @@ export default function SubjectsAdminPage() {
   const [editData, setEditData] = useState({ name: "", description: "", category: "general", isActive: true });
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const [showNew, setShowNew] = useState(false);
   const [newData, setNewData] = useState({ name: "", description: "", category: "general" });
@@ -91,6 +92,7 @@ export default function SubjectsAdminPage() {
 
   const handleDelete = async () => {
     if (!deleteId) return;
+    setDeleting(true);
     try {
       const res = await fetch(`/api/subjects/${deleteId}`, {
         method: "DELETE",
@@ -106,6 +108,7 @@ export default function SubjectsAdminPage() {
       toast.error("Something went wrong");
     } finally {
       setDeleteId(null);
+      setDeleting(false);
     }
   };
 
@@ -195,7 +198,7 @@ export default function SubjectsAdminPage() {
                 <select
                   value={newData.category}
                   onChange={(e) => setNewData({ ...newData, category: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500"
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 cursor-pointer"
                 >
                   {categories.map((c) => (
                     <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
@@ -255,7 +258,7 @@ export default function SubjectsAdminPage() {
                       <select
                         value={editData.category}
                         onChange={(e) => setEditData({ ...editData, category: e.target.value })}
-                        className="px-3 py-1.5 border border-violet-300 rounded-lg text-sm focus:outline-none focus:border-violet-500"
+                        className="px-3 py-1.5 border border-violet-300 rounded-lg text-sm focus:outline-none focus:border-violet-500 cursor-pointer"
                       >
                         {categories.map((c) => (
                           <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
@@ -349,7 +352,7 @@ export default function SubjectsAdminPage() {
         open={!!deleteId}
         title="Delete Subject"
         message="Are you sure? This will permanently delete this subject. Subjects with materials cannot be deleted."
-        confirmLabel="Delete"
+        confirmLabel={deleting ? "Deleting..." : "Delete"}
         variant="danger"
         onConfirm={handleDelete}
         onCancel={() => setDeleteId(null)}

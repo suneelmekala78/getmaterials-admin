@@ -29,22 +29,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Program not found in this college" }, { status: 400 });
     }
 
-    // Check duplicate
-    const exists = college.branches.some(
+    // Check if branch already exists - if so, merge sections
+    const existingBranch = college.branches.find(
       (b: any) => b.program === program.toLowerCase() && b.name === name.toUpperCase()
     );
-    if (exists) {
-      return NextResponse.json({ error: "Branch already exists for this program" }, { status: 409 });
-    }
 
-    college.branches.push({
-      program: program.toLowerCase(),
-      name: name.toUpperCase(),
-      sections: (sections || []).map((s: string) => s.toUpperCase()),
-    });
+    if (existingBranch) {
+      // Merge new sections into existing branch
+      const newSections = (sections || []).map((s: string) => s.toUpperCase());
+      const existingSections = existingBranch.sections || [];
+      const merged = [...new Set([...existingSections, ...newSections])];
+      existingBranch.sections = merged;
+    } else {
+      college.branches.push({
+        program: program.toLowerCase(),
+        name: name.toUpperCase(),
+        sections: (sections || []).map((s: string) => s.toUpperCase()),
+      });
+    }
     await college.save();
 
-    return NextResponse.json({ message: "Branch added", college });
+    return NextResponse.json({ message: existingBranch ? "Sections merged into existing branch" : "Branch added", college });
   } catch {
     return NextResponse.json({ error: "Failed to add branch" }, { status: 500 });
   }

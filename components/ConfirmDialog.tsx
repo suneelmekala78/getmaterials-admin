@@ -81,7 +81,8 @@ export function ConfirmDialog({
           </button>
           <button
             onClick={onConfirm}
-            className={`flex-1 px-4 py-2.5 text-sm font-medium text-white rounded-xl transition-colors ${colors.btn}`}
+            disabled={confirmLabel.endsWith("...")}
+            className={`flex-1 px-4 py-2.5 text-sm font-medium text-white rounded-xl transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${colors.btn}`}
           >
             {confirmLabel}
           </button>

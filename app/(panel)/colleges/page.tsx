@@ -43,6 +43,8 @@ export default function AdminCollegesPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [removingItem, setRemovingItem] = useState<string | null>(null);
   const [expandedCollege, setExpandedCollege] = useState<string | null>(null);
 
   // College form
@@ -108,6 +110,7 @@ export default function AdminCollegesPage() {
 
   const handleDelete = async () => {
     if (!deleteId) return;
+    setDeleting(true);
     try {
       const res = await fetch("/api/colleges", {
         method: "DELETE",
@@ -124,6 +127,7 @@ export default function AdminCollegesPage() {
       toast.error("Something went wrong");
     } finally {
       setDeleteId(null);
+      setDeleting(false);
     }
   };
 
@@ -148,6 +152,7 @@ export default function AdminCollegesPage() {
   };
 
   const handleRemoveProgram = async (collegeId: string, programKey: string) => {
+    setRemovingItem(`program-${programKey}`);
     try {
       const res = await fetch(`/api/colleges/programs`, {
         method: "DELETE",
@@ -160,6 +165,8 @@ export default function AdminCollegesPage() {
       }
     } catch {
       toast.error("Failed to remove program");
+    } finally {
+      setRemovingItem(null);
     }
   };
 
@@ -185,6 +192,7 @@ export default function AdminCollegesPage() {
   };
 
   const handleRemoveBranch = async (collegeId: string, program: string, branchName: string) => {
+    setRemovingItem(`branch-${program}-${branchName}`);
     try {
       const res = await fetch(`/api/colleges/branches`, {
         method: "DELETE",
@@ -197,6 +205,8 @@ export default function AdminCollegesPage() {
       }
     } catch {
       toast.error("Failed to remove branch");
+    } finally {
+      setRemovingItem(null);
     }
   };
 
@@ -221,6 +231,7 @@ export default function AdminCollegesPage() {
   };
 
   const handleRemoveBatch = async (collegeId: string, program: string, startYear: number, endYear: number) => {
+    setRemovingItem(`batch-${program}-${startYear}-${endYear}`);
     try {
       const res = await fetch(`/api/colleges/batches`, {
         method: "DELETE",
@@ -233,6 +244,8 @@ export default function AdminCollegesPage() {
       }
     } catch {
       toast.error("Failed to remove batch");
+    } finally {
+      setRemovingItem(null);
     }
   };
 
@@ -363,7 +376,7 @@ export default function AdminCollegesPage() {
                                 <p className="text-sm font-medium text-slate-800">{p.label}</p>
                                 <p className="text-xs text-slate-500">{p.durationYears} years • {p.totalSemesters} semesters</p>
                               </div>
-                              <button onClick={() => handleRemoveProgram(college._id, p.key)} className="p-1 text-slate-400 hover:text-red-500"><Trash2 className="w-3.5 h-3.5" /></button>
+                              <button onClick={() => handleRemoveProgram(college._id, p.key)} disabled={removingItem === `program-${p.key}`} className="p-1 text-slate-400 hover:text-red-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">{removingItem === `program-${p.key}` ? <span className="w-3.5 h-3.5 border-2 border-slate-300 border-t-red-500 rounded-full animate-spin inline-block" /> : <Trash2 className="w-3.5 h-3.5" />}</button>
                             </div>
                           ))}
                         </div>
@@ -385,7 +398,7 @@ export default function AdminCollegesPage() {
                       {showBranchForm === college._id && (
                         <div className="bg-slate-50 rounded-xl p-4 mb-3 space-y-3">
                           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-                            <select value={branchForm.program} onChange={(e) => setBranchForm({ ...branchForm, program: e.target.value })} className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500">
+                            <select value={branchForm.program} onChange={(e) => setBranchForm({ ...branchForm, program: e.target.value })} className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 cursor-pointer">
                               <option value="">Select Program</option>
                               {college.programs?.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}
                             </select>
@@ -409,7 +422,7 @@ export default function AdminCollegesPage() {
                                   </div>
                                 )}
                               </div>
-                              <button onClick={() => handleRemoveBranch(college._id, b.program, b.name)} className="p-1 text-slate-400 hover:text-red-500"><Trash2 className="w-3.5 h-3.5" /></button>
+                              <button onClick={() => handleRemoveBranch(college._id, b.program, b.name)} disabled={removingItem === `branch-${b.program}-${b.name}`} className="p-1 text-slate-400 hover:text-red-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">{removingItem === `branch-${b.program}-${b.name}` ? <span className="w-3.5 h-3.5 border-2 border-slate-300 border-t-red-500 rounded-full animate-spin inline-block" /> : <Trash2 className="w-3.5 h-3.5" />}</button>
                             </div>
                           ))}
                         </div>
@@ -431,11 +444,11 @@ export default function AdminCollegesPage() {
                       {showBatchForm === college._id && (
                         <div className="bg-slate-50 rounded-xl p-4 mb-3 space-y-3">
                           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                            <select value={batchForm.program} onChange={(e) => setBatchForm({ ...batchForm, program: e.target.value })} className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500">
+                            <select value={batchForm.program} onChange={(e) => setBatchForm({ ...batchForm, program: e.target.value })} className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 cursor-pointer">
                               <option value="">Select Program</option>
                               {college.programs?.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}
                             </select>
-                            <select value={batchForm.branch} onChange={(e) => setBatchForm({ ...batchForm, branch: e.target.value })} className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500">
+                            <select value={batchForm.branch} onChange={(e) => setBatchForm({ ...batchForm, branch: e.target.value })} className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 cursor-pointer">
                               <option value="">All Branches</option>
                               {college.branches?.filter(b => b.program === batchForm.program).map((b, i) => <option key={i} value={b.name}>{b.name}</option>)}
                             </select>
@@ -450,7 +463,7 @@ export default function AdminCollegesPage() {
                           {college.batches.map((b, i) => (
                             <div key={i} className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2">
                               <span className="text-xs text-slate-600">{b.program}{b.branch ? ` / ${b.branch}` : ""} — {b.startYear}–{b.endYear}</span>
-                              <button onClick={() => handleRemoveBatch(college._id, b.program, b.startYear, b.endYear)} className="p-0.5 text-slate-400 hover:text-red-500"><X className="w-3 h-3" /></button>
+                              <button onClick={() => handleRemoveBatch(college._id, b.program, b.startYear, b.endYear)} disabled={removingItem === `batch-${b.program}-${b.startYear}-${b.endYear}`} className="p-0.5 text-slate-400 hover:text-red-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">{removingItem === `batch-${b.program}-${b.startYear}-${b.endYear}` ? <span className="w-3 h-3 border-2 border-slate-300 border-t-red-500 rounded-full animate-spin inline-block" /> : <X className="w-3 h-3" />}</button>
                             </div>
                           ))}
                         </div>
@@ -480,7 +493,7 @@ export default function AdminCollegesPage() {
         open={!!deleteId}
         title="Delete College"
         message="Are you sure you want to delete this college? This will also remove all associated programs, branches, and batches."
-        confirmLabel="Delete"
+        confirmLabel={deleting ? "Deleting..." : "Delete"}
         variant="danger"
         onConfirm={handleDelete}
         onCancel={() => setDeleteId(null)}

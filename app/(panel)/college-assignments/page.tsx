@@ -72,6 +72,7 @@ export default function CollegeAssignmentsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Filter
   const [filterCollege, setFilterCollege] = useState("");
@@ -190,6 +191,7 @@ export default function CollegeAssignmentsPage() {
 
   const handleDelete = async () => {
     if (!deleteId) return;
+    setDeleting(true);
     try {
       const res = await fetch(`/api/college-assignments?id=${deleteId}`, { method: "DELETE" });
       if (res.ok) {
@@ -202,6 +204,7 @@ export default function CollegeAssignmentsPage() {
       toast.error("Something went wrong");
     } finally {
       setDeleteId(null);
+      setDeleting(false);
     }
   };
 
@@ -271,7 +274,7 @@ export default function CollegeAssignmentsPage() {
                   value={form.college}
                   onChange={(e) => setForm({ ...form, college: e.target.value, program: "", branch: "", section: "" })}
                   required
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 cursor-pointer"
                 >
                   <option value="">Select college</option>
                   {colleges.map((c) => (
@@ -286,7 +289,7 @@ export default function CollegeAssignmentsPage() {
                   onChange={(e) => setForm({ ...form, program: e.target.value, branch: "", section: "" })}
                   required
                   disabled={!form.college}
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:opacity-50"
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:opacity-50 cursor-pointer"
                 >
                   <option value="">Select program</option>
                   {collegePrograms.map((p) => (
@@ -300,7 +303,7 @@ export default function CollegeAssignmentsPage() {
                   value={form.branch}
                   onChange={(e) => setForm({ ...form, branch: e.target.value, section: "" })}
                   disabled={!form.program || collegeBranches.length === 0}
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:opacity-50"
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:opacity-50 cursor-pointer"
                 >
                   <option value="">All branches</option>
                   {collegeBranches.map((b, i) => (
@@ -314,7 +317,7 @@ export default function CollegeAssignmentsPage() {
                   value={form.section}
                   onChange={(e) => setForm({ ...form, section: e.target.value })}
                   disabled={!form.branch || branchSections.length === 0}
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:opacity-50"
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:opacity-50 cursor-pointer"
                 >
                   <option value="">All sections</option>
                   {branchSections.map((s) => (
@@ -328,7 +331,7 @@ export default function CollegeAssignmentsPage() {
                   value={form.semester}
                   onChange={(e) => setForm({ ...form, semester: parseInt(e.target.value) })}
                   required
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 cursor-pointer"
                 >
                   {Array.from({ length: maxSemesters }, (_, i) => i + 1).map((s) => (
                     <option key={s} value={s}>Semester {s}</option>
@@ -341,7 +344,7 @@ export default function CollegeAssignmentsPage() {
                   value={form.subject}
                   onChange={(e) => setForm({ ...form, subject: e.target.value, chapter: "" })}
                   required
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 cursor-pointer"
                 >
                   <option value="">Select subject</option>
                   {subjects.map((s) => (
@@ -355,7 +358,7 @@ export default function CollegeAssignmentsPage() {
                   value={form.chapter}
                   onChange={(e) => setForm({ ...form, chapter: e.target.value })}
                   disabled={!form.subject}
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:opacity-50"
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:opacity-50 cursor-pointer"
                 >
                   <option value="">All chapters / Not specific</option>
                   {filteredChapters.map((c: any) => (
@@ -380,7 +383,7 @@ export default function CollegeAssignmentsPage() {
                 <select
                   value={form.materialType}
                   onChange={(e) => setForm({ ...form, materialType: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 cursor-pointer"
                 >
                   {materialTypes.map((mt) => (
                     <option key={mt.value} value={mt.value}>{mt.label}</option>
@@ -437,7 +440,7 @@ export default function CollegeAssignmentsPage() {
         <select
           value={filterCollege}
           onChange={(e) => setFilterCollege(e.target.value)}
-          className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-600 focus:outline-none focus:border-violet-500"
+          className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-600 focus:outline-none focus:border-violet-500 cursor-pointer"
         >
           <option value="">All Colleges</option>
           {colleges.map((c) => (
@@ -447,7 +450,7 @@ export default function CollegeAssignmentsPage() {
         <select
           value={filterSubject}
           onChange={(e) => setFilterSubject(e.target.value)}
-          className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-600 focus:outline-none focus:border-violet-500"
+          className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-600 focus:outline-none focus:border-violet-500 cursor-pointer"
         >
           <option value="">All Subjects</option>
           {subjects.map((s) => (
@@ -519,7 +522,7 @@ export default function CollegeAssignmentsPage() {
         open={!!deleteId}
         title="Delete Assignment"
         message="Are you sure you want to delete this college assignment?"
-        confirmLabel="Delete"
+        confirmLabel={deleting ? "Deleting..." : "Delete"}
         variant="danger"
         onConfirm={handleDelete}
         onCancel={() => setDeleteId(null)}
