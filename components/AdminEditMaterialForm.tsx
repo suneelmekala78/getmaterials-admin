@@ -303,13 +303,20 @@ export function AdminEditMaterialForm({ material, subjects, chapters, colleges }
 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1.5">Description</label>
+          {formData.description && /<[^>]+>/.test(formData.description) && (
+            <div
+              className="mb-2 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm prose prose-sm max-w-none [&_h1]:text-xl [&_h1]:font-bold [&_h2]:text-lg [&_h2]:font-semibold [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-violet-600 [&_a]:underline"
+              dangerouslySetInnerHTML={{ __html: formData.description }}
+            />
+          )}
           <textarea
-            value={formData.description}
+            value={formData.description.replace(/<[^>]+>/g, "")}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             placeholder="Describe this material..."
             rows={4}
             className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 resize-none"
           />
+          <p className="text-xs text-slate-400 mt-1">Editing will convert to plain text. Rich formatting from teacher uploads is shown above.</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
