@@ -5,6 +5,19 @@ import { Plus, Trash2, Pencil, X, Filter } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import toast from "react-hot-toast";
 
+interface CollegeProgram {
+  key: string;
+  label: string;
+  durationYears: number;
+  totalSemesters: number;
+}
+
+interface CollegeBranch {
+  program: string;
+  name: string;
+  sections: string[];
+}
+
 interface Assignment {
   _id: string;
   college: { _id: string; name: string; code: string };
@@ -14,14 +27,18 @@ interface Assignment {
   unit?: number;
   program: string;
   branch?: string;
+  section?: string;
   batchStart: number;
   batchEnd: number;
+  materialType?: string;
 }
 
 interface College {
   _id: string;
   name: string;
   code: string;
+  programs: CollegeProgram[];
+  branches: CollegeBranch[];
 }
 
 interface SubjectItem {
@@ -35,17 +52,14 @@ interface ChapterItem {
   subject: string;
 }
 
-const programs = [
-  { value: "btech", label: "B.Tech" },
-  { value: "mtech", label: "M.Tech" },
-  { value: "mca", label: "MCA" },
-  { value: "bca", label: "BCA" },
-  { value: "bsc", label: "B.Sc" },
-  { value: "msc", label: "M.Sc" },
-  { value: "mba", label: "MBA" },
-  { value: "bba", label: "BBA" },
-  { value: "diploma", label: "Diploma" },
-  { value: "phd", label: "Ph.D" },
+const materialTypes = [
+  { value: "", label: "Any type" },
+  { value: "notes", label: "Notes" },
+  { value: "question_paper", label: "Question Paper" },
+  { value: "syllabus", label: "Syllabus" },
+  { value: "assignment", label: "Assignment" },
+  { value: "lab_manual", label: "Lab Manual" },
+  { value: "reference", label: "Reference" },
   { value: "other", label: "Other" },
 ];
 
@@ -70,10 +84,12 @@ export default function CollegeAssignmentsPage() {
     chapter: "",
     semester: 1,
     unit: "",
-    program: "btech",
+    program: "",
     branch: "",
+    section: "",
     batchStart: new Date().getFullYear(),
     batchEnd: new Date().getFullYear() + 4,
+    materialType: "",
   });
 
   useEffect(() => {
@@ -106,10 +122,12 @@ export default function CollegeAssignmentsPage() {
       chapter: "",
       semester: 1,
       unit: "",
-      program: "btech",
+      program: "",
       branch: "",
+      section: "",
       batchStart: new Date().getFullYear(),
       batchEnd: new Date().getFullYear() + 4,
+      materialType: "",
     });
     setEditingId(null);
     setShowForm(false);
@@ -125,8 +143,10 @@ export default function CollegeAssignmentsPage() {
       unit: a.unit?.toString() || "",
       program: a.program,
       branch: a.branch || "",
+      section: a.section || "",
       batchStart: a.batchStart,
       batchEnd: a.batchEnd,
+      materialType: a.materialType || "",
     });
     setShowForm(true);
   };
@@ -143,8 +163,10 @@ export default function CollegeAssignmentsPage() {
         unit: form.unit ? parseInt(form.unit) : undefined,
         program: form.program,
         branch: form.branch || undefined,
+        section: form.section || undefined,
         batchStart: form.batchStart,
         batchEnd: form.batchEnd,
+        materialType: form.materialType || undefined,
       };
 
       const method = editingId ? "PATCH" : "POST";
@@ -187,6 +209,17 @@ export default function CollegeAssignmentsPage() {
     (c: any) => (c.subject?._id || c.subject) === form.subject
   );
 
+  // Get selected college's programs/branches/sections
+  const selectedCollege = colleges.find((c) => c._id === form.college);
+  const collegePrograms = selectedCollege?.programs || [];
+  const collegeBranches = (selectedCollege?.branches || []).filter(
+    (b) => b.program === form.program
+  );
+  const selectedBranch = collegeBranches.find((b) => b.name === form.branch);
+  const branchSections = selectedBranch?.sections || [];
+  const selectedProgram = collegePrograms.find((p) => p.key === form.program);
+  const maxSemesters = selectedProgram?.totalSemesters || 10;
+
   const filteredAssignments = assignments.filter((a) => {
     if (filterCollege && a.college._id !== filterCollege) return false;
     if (filterSubject && a.subject._id !== filterSubject) return false;
@@ -205,9 +238,9 @@ export default function CollegeAssignmentsPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">College Assignments</h1>
+          <h1 className="text-2xl font-bold text-slate-900">College Subjects</h1>
           <p className="text-slate-500 mt-1">
-            Assign subjects and chapters to colleges with semester, unit, branch, and batch details.
+            Assign subjects to colleges — specify program, branch, semester, section & batch.
           </p>
         </div>
         <button
@@ -236,13 +269,69 @@ export default function CollegeAssignmentsPage() {
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">College *</label>
                 <select
                   value={form.college}
-                  onChange={(e) => setForm({ ...form, college: e.target.value })}
+                  onChange={(e) => setForm({ ...form, college: e.target.value, program: "", branch: "", section: "" })}
                   required
                   className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
                 >
                   <option value="">Select college</option>
                   {colleges.map((c) => (
                     <option key={c._id} value={c._id}>{c.name} ({c.code})</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Program *</label>
+                <select
+                  value={form.program}
+                  onChange={(e) => setForm({ ...form, program: e.target.value, branch: "", section: "" })}
+                  required
+                  disabled={!form.college}
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:opacity-50"
+                >
+                  <option value="">Select program</option>
+                  {collegePrograms.map((p) => (
+                    <option key={p.key} value={p.key}>{p.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Branch</label>
+                <select
+                  value={form.branch}
+                  onChange={(e) => setForm({ ...form, branch: e.target.value, section: "" })}
+                  disabled={!form.program || collegeBranches.length === 0}
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:opacity-50"
+                >
+                  <option value="">All branches</option>
+                  {collegeBranches.map((b, i) => (
+                    <option key={i} value={b.name}>{b.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Section</label>
+                <select
+                  value={form.section}
+                  onChange={(e) => setForm({ ...form, section: e.target.value })}
+                  disabled={!form.branch || branchSections.length === 0}
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:opacity-50"
+                >
+                  <option value="">All sections</option>
+                  {branchSections.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Semester *</label>
+                <select
+                  value={form.semester}
+                  onChange={(e) => setForm({ ...form, semester: parseInt(e.target.value) })}
+                  required
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+                >
+                  {Array.from({ length: maxSemesters }, (_, i) => i + 1).map((s) => (
+                    <option key={s} value={s}>Semester {s}</option>
                   ))}
                 </select>
               </div>
@@ -275,19 +364,6 @@ export default function CollegeAssignmentsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Semester *</label>
-                <select
-                  value={form.semester}
-                  onChange={(e) => setForm({ ...form, semester: parseInt(e.target.value) })}
-                  required
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
-                >
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((s) => (
-                    <option key={s} value={s}>Semester {s}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">Unit (optional)</label>
                 <input
                   type="number"
@@ -300,27 +376,16 @@ export default function CollegeAssignmentsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Program *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Material Type</label>
                 <select
-                  value={form.program}
-                  onChange={(e) => setForm({ ...form, program: e.target.value })}
-                  required
+                  value={form.materialType}
+                  onChange={(e) => setForm({ ...form, materialType: e.target.value })}
                   className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
                 >
-                  {programs.map((p) => (
-                    <option key={p.value} value={p.value}>{p.label}</option>
+                  {materialTypes.map((mt) => (
+                    <option key={mt.value} value={mt.value}>{mt.label}</option>
                   ))}
                 </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Branch (optional)</label>
-                <input
-                  type="text"
-                  value={form.branch}
-                  onChange={(e) => setForm({ ...form, branch: e.target.value })}
-                  placeholder="e.g., CSE, AI, ECE"
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
-                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">Batch Start Year *</label>
@@ -399,12 +464,12 @@ export default function CollegeAssignmentsPage() {
               <tr>
                 <th className="text-left px-5 py-3 font-semibold text-slate-600">College</th>
                 <th className="text-left px-5 py-3 font-semibold text-slate-600">Subject</th>
-                <th className="text-left px-5 py-3 font-semibold text-slate-600">Chapter</th>
-                <th className="text-left px-5 py-3 font-semibold text-slate-600">Sem</th>
-                <th className="text-left px-5 py-3 font-semibold text-slate-600">Unit</th>
                 <th className="text-left px-5 py-3 font-semibold text-slate-600">Program</th>
                 <th className="text-left px-5 py-3 font-semibold text-slate-600">Branch</th>
+                <th className="text-left px-5 py-3 font-semibold text-slate-600">Section</th>
+                <th className="text-left px-5 py-3 font-semibold text-slate-600">Sem</th>
                 <th className="text-left px-5 py-3 font-semibold text-slate-600">Batch</th>
+                <th className="text-left px-5 py-3 font-semibold text-slate-600">Type</th>
                 <th className="text-right px-5 py-3 font-semibold text-slate-600">Actions</th>
               </tr>
             </thead>
@@ -413,12 +478,12 @@ export default function CollegeAssignmentsPage() {
                 <tr key={a._id} className="hover:bg-slate-50">
                   <td className="px-5 py-3 font-medium text-slate-900">{a.college?.name || "—"}</td>
                   <td className="px-5 py-3 text-slate-700">{a.subject?.name || "—"}</td>
-                  <td className="px-5 py-3 text-slate-600">{a.chapter?.title || "All"}</td>
-                  <td className="px-5 py-3 text-slate-600">{a.semester}</td>
-                  <td className="px-5 py-3 text-slate-600">{a.unit || "—"}</td>
                   <td className="px-5 py-3 text-slate-600 uppercase text-xs">{a.program}</td>
                   <td className="px-5 py-3 text-slate-600">{a.branch || "—"}</td>
+                  <td className="px-5 py-3 text-slate-600">{a.section || "—"}</td>
+                  <td className="px-5 py-3 text-slate-600">{a.semester}</td>
                   <td className="px-5 py-3 text-slate-600">{a.batchStart}–{a.batchEnd}</td>
+                  <td className="px-5 py-3 text-slate-600 text-xs">{a.materialType?.replace("_", " ") || "Any"}</td>
                   <td className="px-5 py-3 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <button
@@ -444,7 +509,7 @@ export default function CollegeAssignmentsPage() {
         {filteredAssignments.length === 0 && (
           <div className="p-12 text-center">
             <p className="text-sm text-slate-500">
-              No assignments found. Create one to map subjects/chapters to a college.
+              No college subjects found. Assign subjects to a college&apos;s program, branch & semester.
             </p>
           </div>
         )}

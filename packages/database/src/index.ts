@@ -1,6 +1,6 @@
 export { connectDB } from "./connection";
 export { User, type IUser } from "./models/user";
-export { College, type ICollege } from "./models/college";
+export { College, type ICollege, type ICollegeProgram, type ICollegeBranch, type ICollegeBatch } from "./models/college";
 export { CollegeAssignment, type ICollegeAssignment } from "./models/college-assignment";
 export { Subject, type ISubject } from "./models/subject";
 export { Chapter, type IChapter } from "./models/chapter";

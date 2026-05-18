@@ -15,7 +15,7 @@ export interface IMaterial extends Document {
   slug: string;
   type: "pdf" | "video" | "link" | "image" | "assignment";
   materialCategory: "notes" | "question_paper" | "syllabus" | "assignment" | "lab_manual" | "reference" | "other";
-  program: "btech" | "mtech" | "mca" | "bca" | "bsc" | "msc" | "mba" | "bba" | "diploma" | "phd" | "other";
+  program: string;
   branch?: string;
   semester?: number;
   chapter: mongoose.Types.ObjectId;
@@ -23,6 +23,7 @@ export interface IMaterial extends Document {
   uploadedBy: mongoose.Types.ObjectId;
   college?: mongoose.Types.ObjectId;
   batch?: string;
+  section?: string;
   thumbnailUrl?: string;
   attachments: IAttachment[];
   tags: string[];
@@ -55,8 +56,9 @@ const MaterialSchema = new Schema<IMaterial>(
     },
     program: {
       type: String,
-      enum: ["btech", "mtech", "mca", "bca", "bsc", "msc", "mba", "bba", "diploma", "phd", "other"],
       default: "btech",
+      trim: true,
+      lowercase: true,
     },
     branch: { type: String, trim: true, uppercase: true },
     semester: { type: Number, min: 1, max: 10 },
@@ -65,6 +67,7 @@ const MaterialSchema = new Schema<IMaterial>(
     uploadedBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
     college: { type: Schema.Types.ObjectId, ref: "College" },
     batch: { type: String, trim: true },
+    section: { type: String, trim: true, uppercase: true },
     thumbnailUrl: { type: String },
     attachments: [
       {

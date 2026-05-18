@@ -45,11 +45,11 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { college, subject, chapter, semester, unit, program, branch, batchStart, batchEnd } = body;
+    const { college, subject, chapter, semester, unit, program, branch, section, batchStart, batchEnd, materialType } = body;
 
-    if (!college || !subject || !semester || !batchStart || !batchEnd) {
+    if (!college || !subject || !semester || !batchStart || !batchEnd || !program) {
       return NextResponse.json(
-        { error: "College, subject, semester, batch start and batch end are required" },
+        { error: "College, subject, semester, program, batch start and batch end are required" },
         { status: 400 }
       );
     }
@@ -66,10 +66,12 @@ export async function POST(req: NextRequest) {
       chapter: chapter || undefined,
       semester,
       unit: unit || undefined,
-      program: program || "btech",
+      program,
       branch: branch?.trim() || undefined,
+      section: section?.trim() || undefined,
       batchStart,
       batchEnd,
+      materialType: materialType || undefined,
       createdBy: (session.user as any).id,
     });
 
