@@ -19,7 +19,7 @@ export async function GET(
     .select("assignedColleges college")
     .populate("assignedColleges", "name code")
     .populate("college", "name code")
-    .lean();
+    .lean() as any;
 
   if (!teacher) {
     return NextResponse.json({ error: "Teacher not found" }, { status: 404 });
