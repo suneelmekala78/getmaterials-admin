@@ -153,7 +153,10 @@ export function AdminEditMaterialForm({ material, subjects, chapters, colleges }
         thumbData.append("file", thumbnail);
         thumbData.append("folder", "thumbnails");
         const thumbRes = await fetch("/api/upload", { method: "POST", body: thumbData });
-        if (!thumbRes.ok) throw new Error("Failed to upload thumbnail");
+        if (!thumbRes.ok) {
+          const errData = await thumbRes.json().catch(() => ({}));
+          throw new Error(errData.error || "Failed to upload thumbnail");
+        }
         const { fileUrl } = await thumbRes.json();
         thumbnailUrl = fileUrl;
       }
