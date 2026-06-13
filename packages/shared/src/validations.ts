@@ -42,7 +42,7 @@ const attachmentSchema = z.object({
 
 export const createMaterialSchema = z.object({
   title: z.string().min(2, "Title is required").max(200, "Title must be at most 200 characters"),
-  description: z.string().max(1000, "Description must be at most 1000 characters").optional(),
+  description: z.string().max(3000, "Description must be at most 3000 characters").optional(),
   type: z.enum(["pdf", "video", "link", "image", "assignment"]),
   materialCategory: z.enum(["notes", "question_paper", "syllabus", "assignment", "lab_manual", "reference", "other"]).default("notes"),
   program: z.string().max(50, "Program must be at most 50 characters").default("btech"),

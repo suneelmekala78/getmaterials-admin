@@ -42,7 +42,7 @@ export interface IMaterial extends Document {
 const MaterialSchema = new Schema<IMaterial>(
   {
     title: { type: String, required: true, trim: true },
-    description: { type: String, maxlength: 1000 },
+    description: { type: String, maxlength: 3000 },
     slug: { type: String, required: true, lowercase: true },
     type: {
       type: String,
