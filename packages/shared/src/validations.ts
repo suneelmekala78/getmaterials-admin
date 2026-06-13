@@ -41,21 +41,21 @@ const attachmentSchema = z.object({
 });
 
 export const createMaterialSchema = z.object({
-  title: z.string().min(2, "Title is required").max(200),
-  description: z.string().max(1000).optional(),
+  title: z.string().min(2, "Title is required").max(200, "Title must be at most 200 characters"),
+  description: z.string().max(1000, "Description must be at most 1000 characters").optional(),
   type: z.enum(["pdf", "video", "link", "image", "assignment"]),
   materialCategory: z.enum(["notes", "question_paper", "syllabus", "assignment", "lab_manual", "reference", "other"]).default("notes"),
-  program: z.string().max(50).default("btech"),
-  branch: z.string().max(50).optional(),
-  section: z.string().max(10).optional(),
-  semester: z.number().int().min(1).max(20).optional(),
+  program: z.string().max(50, "Program must be at most 50 characters").default("btech"),
+  branch: z.string().max(50, "Branch must be at most 50 characters").optional(),
+  section: z.string().max(10, "Section must be at most 10 characters").optional(),
+  semester: z.number().int().min(1, "Semester must be at least 1").max(20, "Semester must be at most 20").optional(),
   chapter: z.string().optional(),
   subject: z.string().min(1, "Subject is required"),
   college: z.string().optional(),
-  batch: z.string().max(20).optional(),
+  batch: z.string().max(20, "Batch must be at most 20 characters").optional(),
   thumbnailUrl: z.string().optional(),
-  attachments: z.array(attachmentSchema).min(1, "At least one attachment is required").max(10),
-  tags: z.array(z.string()).max(10).optional(),
+  attachments: z.array(attachmentSchema).min(1, "At least one attachment is required").max(10, "Maximum 10 attachments allowed"),
+  tags: z.array(z.string()).max(10, "Maximum 10 tags allowed").optional(),
   isPublic: z.boolean().default(true),
 });
 
