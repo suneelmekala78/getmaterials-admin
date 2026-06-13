@@ -49,7 +49,7 @@ export const createMaterialSchema = z.object({
   branch: z.string().max(50).optional(),
   section: z.string().max(10).optional(),
   semester: z.number().int().min(1).max(20).optional(),
-  chapter: z.string().min(1, "Chapter is required"),
+  chapter: z.string().optional(),
   subject: z.string().min(1, "Subject is required"),
   college: z.string().optional(),
   batch: z.string().max(20).optional(),
