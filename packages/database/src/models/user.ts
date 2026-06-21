@@ -1,5 +1,12 @@
 import mongoose, { Schema, Document } from "mongoose";
 
+export interface IPushDevice {
+  pushToken: string;
+  platform: "android" | "ios";
+  deviceName: string;
+  createdAt: Date;
+}
+
 export interface IUser extends Document {
   email: string;
   name: string;
@@ -12,6 +19,7 @@ export interface IUser extends Document {
   bio?: string;
   qualifications?: string;
   bookmarks: mongoose.Types.ObjectId[];
+  pushDevices: IPushDevice[];
   emailVerified?: Date;
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
@@ -47,6 +55,14 @@ const UserSchema = new Schema<IUser>(
     bio: { type: String, maxlength: 500 },
     qualifications: { type: String, maxlength: 500 },
     bookmarks: [{ type: Schema.Types.ObjectId, ref: "Material" }],
+    pushDevices: [
+      {
+        pushToken: { type: String, required: true },
+        platform: { type: String, enum: ["android", "ios"], required: true },
+        deviceName: { type: String, default: "Unknown Device" },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
     emailVerified: { type: Date },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
