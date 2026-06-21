@@ -5,6 +5,7 @@ export { CollegeAssignment, type ICollegeAssignment } from "./models/college-ass
 export { Subject, type ISubject } from "./models/subject";
 export { Chapter, type IChapter } from "./models/chapter";
 export { Material, type IMaterial, type IAttachment } from "./models/material";
+export { MaterialView, type IMaterialView } from "./models/material-view";
 export { Quiz, QuizAttempt, type IQuiz, type IQuizAttempt } from "./models/quiz";
 export {
   Feedback,
@@ -26,3 +27,4 @@ export { Poll, type IPoll } from "./models/poll";
 export { Review, type IReview } from "./models/review";
 export { RoleChangeRequest, type IRoleChangeRequest } from "./models/role-change-request";
 export { Referral, type IReferral } from "./models/referral";
+export { RefreshToken, type IRefreshToken } from "./models/refresh-token";
