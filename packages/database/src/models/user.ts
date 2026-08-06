@@ -7,6 +7,11 @@ export interface IPushDevice {
   createdAt: Date;
 }
 
+export interface IMaterialHistoryItem {
+  material: mongoose.Types.ObjectId;
+  at: Date;
+}
+
 export interface IUser extends Document {
   email: string;
   name: string;
@@ -19,6 +24,8 @@ export interface IUser extends Document {
   bio?: string;
   qualifications?: string;
   bookmarks: mongoose.Types.ObjectId[];
+  downloadHistory: IMaterialHistoryItem[];
+  viewHistory: IMaterialHistoryItem[];
   pushDevices: IPushDevice[];
   emailVerified?: Date;
   resetPasswordToken?: string;
@@ -55,6 +62,18 @@ const UserSchema = new Schema<IUser>(
     bio: { type: String, maxlength: 500 },
     qualifications: { type: String, maxlength: 500 },
     bookmarks: [{ type: Schema.Types.ObjectId, ref: "Material" }],
+    downloadHistory: [
+      {
+        material: { type: Schema.Types.ObjectId, ref: "Material", required: true },
+        at: { type: Date, default: Date.now },
+      },
+    ],
+    viewHistory: [
+      {
+        material: { type: Schema.Types.ObjectId, ref: "Material", required: true },
+        at: { type: Date, default: Date.now },
+      },
+    ],
     pushDevices: [
       {
         pushToken: { type: String, required: true },
