@@ -5,6 +5,12 @@ export const APP_URL = "https://getmaterials.in";
 export const APP_MAIN_URL = "https://app.getmaterials.in";
 export const APP_ADMIN_URL = "https://admin.getmaterials.in";
 
+export const CONTACT_EMAIL = "getmaterials.in@gmail.com";
+export const CONTACT_PHONE = "+91 9603083867";
+export const CONTACT_PHONE_E164 = "+919603083867";
+export const CONTACT_OFFICE =
+  "Workafella Cyber Crown, Hitech City, Hyderabad";
+
 export const BRAND_COLOR = "#7c3aed"; // violet-600
 export const BRAND_COLOR_LIGHT = "#a78bfa"; // violet-400
 export const BRAND_COLOR_DARK = "#5b21b6"; // violet-800
