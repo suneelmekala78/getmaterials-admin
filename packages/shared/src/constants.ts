@@ -9,7 +9,7 @@ export const CONTACT_EMAIL = "getmaterials.in@gmail.com";
 export const CONTACT_PHONE = "+91 9603083867";
 export const CONTACT_PHONE_E164 = "+919603083867";
 export const CONTACT_OFFICE =
-  "Workafella Cyber Crown, Hitech City, Hyderabad";
+  "Hitech City, Hyderabad";
 
 export const BRAND_COLOR = "#7c3aed"; // violet-600
 export const BRAND_COLOR_LIGHT = "#a78bfa"; // violet-400
