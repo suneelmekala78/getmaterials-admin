@@ -23,6 +23,8 @@ export interface IUser extends Document {
   assignedColleges: mongoose.Types.ObjectId[];
   bio?: string;
   qualifications?: string;
+  appleId?: string;
+  googleId?: string;
   bookmarks: mongoose.Types.ObjectId[];
   downloadHistory: IMaterialHistoryItem[];
   viewHistory: IMaterialHistoryItem[];
@@ -47,6 +49,8 @@ const UserSchema = new Schema<IUser>(
     name: { type: String, required: true, trim: true },
     password: { type: String, select: false },
     avatar: { type: String },
+    appleId: { type: String, sparse: true, unique: true, index: true },
+    googleId: { type: String, sparse: true, unique: true, index: true },
     role: {
       type: String,
       enum: ["student", "teacher", "college_admin", "admin"],
