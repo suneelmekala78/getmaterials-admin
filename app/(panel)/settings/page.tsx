@@ -13,7 +13,6 @@ export default function AdminSettingsPage() {
     autoPublishMaterials: true,
     maxUploadSize: 100,
     notifyNewTeacher: true,
-    notifyDonation: true,
   });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -168,21 +167,6 @@ export default function AdminSettingsPage() {
                 type="checkbox"
                 checked={settings.notifyNewTeacher}
                 onChange={(e) => setSettings({ ...settings, notifyNewTeacher: e.target.checked })}
-                className="sr-only peer"
-              />
-              <div className="w-10 h-5 bg-slate-200 peer-focus:ring-2 peer-focus:ring-violet-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-violet-600"></div>
-            </label>
-          </div>
-          <div className="flex items-center justify-between py-2">
-            <div>
-              <p className="text-sm font-medium text-slate-900">Donation notification</p>
-              <p className="text-xs text-slate-500">Get notified when someone donates</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.notifyDonation}
-                onChange={(e) => setSettings({ ...settings, notifyDonation: e.target.checked })}
                 className="sr-only peer"
               />
               <div className="w-10 h-5 bg-slate-200 peer-focus:ring-2 peer-focus:ring-violet-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-violet-600"></div>

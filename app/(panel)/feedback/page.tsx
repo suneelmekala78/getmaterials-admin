@@ -9,11 +9,27 @@ interface FeedbackItem {
   _id: string;
   name: string;
   email: string;
-  rating: number;
+  type?: "feedback" | "bug";
+  bugType?: string;
+  subject?: string;
+  platform?: string;
+  rating?: number;
   message: string;
   isApproved: boolean;
   createdAt: string;
 }
+
+const BUG_TYPE_LABELS: Record<string, string> = {
+  crash: "App crash or freeze",
+  login: "Login or signup",
+  upload: "Uploading materials",
+  download: "Download or preview",
+  search: "Search or filters",
+  notifications: "Notifications",
+  ui: "Display or layout",
+  performance: "Slow performance",
+  other: "Something else",
+};
 
 export default function FeedbackPage() {
   const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
@@ -80,9 +96,9 @@ export default function FeedbackPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Site Feedback</h1>
+        <h1 className="text-2xl font-bold text-slate-900">Feedback & Bug Reports</h1>
         <p className="text-slate-500 text-sm mt-1">
-          Feedback submitted from the marketing website. {feedback.length} total.
+          Submissions from the website and mobile app. {feedback.length} total.
         </p>
       </div>
 
@@ -104,6 +120,20 @@ export default function FeedbackPage() {
                     <p className="font-semibold text-slate-900">{item.name}</p>
                     <span
                       className={`px-2 py-0.5 text-[10px] font-medium rounded-full ${
+                        item.type === "bug"
+                          ? "bg-red-50 text-red-700"
+                          : "bg-violet-50 text-violet-700"
+                      }`}
+                    >
+                      {item.type === "bug" ? "Bug" : "Feedback"}
+                    </span>
+                    {item.type === "bug" && item.bugType && (
+                      <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-slate-100 text-slate-600">
+                        {BUG_TYPE_LABELS[item.bugType] || item.bugType}
+                      </span>
+                    )}
+                    <span
+                      className={`px-2 py-0.5 text-[10px] font-medium rounded-full ${
                         item.isApproved
                           ? "bg-green-50 text-green-700"
                           : "bg-amber-50 text-amber-700"
@@ -114,20 +144,26 @@ export default function FeedbackPage() {
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5">{item.email}</p>
                 </div>
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <HiOutlineStar
-                      key={i}
-                      className={`w-4 h-4 ${
-                        i < item.rating ? "text-amber-400 fill-amber-400" : "text-slate-200"
-                      }`}
-                    />
-                  ))}
-                </div>
+                {item.type !== "bug" && Boolean(item.rating) && (
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <HiOutlineStar
+                        key={i}
+                        className={`w-4 h-4 ${
+                          i < (item.rating || 0) ? "text-amber-400 fill-amber-400" : "text-slate-200"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
+              {item.subject && (
+                <p className="text-sm font-semibold text-slate-900 mb-1">{item.subject}</p>
+              )}
               <p className="text-sm text-slate-700 mb-3">{item.message}</p>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-400">
+                  {item.platform ? `${item.platform} · ` : ""}
                   {new Date(item.createdAt).toLocaleDateString("en-IN", {
                     day: "numeric",
                     month: "short",

@@ -13,7 +13,6 @@ import {
   HiOutlineAcademicCap,
   HiOutlineBookOpen,
   HiOutlineUserGroup,
-  HiOutlineCash,
   HiOutlineLogout,
   HiOutlinePuzzle,
   HiOutlineSpeakerphone,
@@ -23,6 +22,7 @@ import {
   HiOutlineCollection,
   HiOutlineClipboardList,
   HiOutlineTrendingUp,
+  HiOutlineBell,
 } from "react-icons/hi";
 
 const links = [
@@ -34,10 +34,10 @@ const links = [
   { name: "College Assigns", href: "/college-assignments", icon: HiOutlineClipboardList },
   { name: "Quizzes", href: "/quizzes", icon: HiOutlinePuzzle },
   { name: "Polls", href: "/polls", icon: HiOutlineSpeakerphone },
+  { name: "Notifications", href: "/notifications", icon: HiOutlineBell },
   { name: "Reviews", href: "/reviews", icon: HiOutlineStar },
   { name: "Teachers", href: "/teachers", icon: HiOutlineUserGroup },
   { name: "Users", href: "/users", icon: HiOutlineUsers },
-  { name: "Donations", href: "/donations", icon: HiOutlineCash },
   { name: "Feedback", href: "/feedback", icon: HiOutlineChatAlt2 },
   { name: "Contacts", href: "/contacts", icon: HiOutlineMail },
   { name: "Referrals", href: "/referrals", icon: HiOutlineTrendingUp },

@@ -1,9 +1,8 @@
-import { connectDB, User, Material, Subject, Donation } from "@getmaterials/database";
+import { adminApi } from "@/lib/express-proxy";
 import {
   Users,
   FileText,
   BookOpen,
-  Heart,
   TrendingUp,
   UserCheck,
   Clock,
@@ -14,40 +13,31 @@ import Link from "next/link";
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
-  await connectDB();
+  let totalUsers = 0;
+  let totalMaterials = 0;
+  let totalSubjects = 0;
+  let pendingTeachers = 0;
+  let downloadsTotal = 0;
+  let recentUsers: any[] = [];
+  let apiDown = false;
 
-  const [
-    totalUsers,
-    totalMaterials,
-    totalSubjects,
-    pendingTeachers,
-    totalDonations,
-    totalDownloads,
-    recentUsers,
-  ] = await Promise.all([
-    User.countDocuments(),
-    Material.countDocuments(),
-    Subject.countDocuments(),
-    User.countDocuments({ role: "teacher", status: "pending" }),
-    Donation.aggregate([
-      { $match: { status: "completed" } },
-      { $group: { _id: null, total: { $sum: "$amount" } } },
-    ]),
-    Material.aggregate([
-      { $group: { _id: null, total: { $sum: "$downloads" } } },
-    ]),
-    User.find().sort({ createdAt: -1 }).limit(5).lean(),
-  ]);
-
-  const donationTotal = totalDonations[0]?.total || 0;
-  const downloadsTotal = totalDownloads[0]?.total || 0;
+  try {
+    const data = await adminApi("/api/admin/dashboard");
+    totalUsers = data.totalUsers || 0;
+    totalMaterials = data.totalMaterials || 0;
+    totalSubjects = data.totalSubjects || 0;
+    pendingTeachers = data.pendingTeachers || 0;
+    downloadsTotal = data.downloadsTotal || 0;
+    recentUsers = data.recentUsers || [];
+  } catch {
+    apiDown = true;
+  }
 
   const stats = [
     { icon: Users, label: "Total Users", value: totalUsers, color: "text-blue-600 bg-blue-50", href: "/users" },
     { icon: FileText, label: "Total Materials", value: totalMaterials, color: "text-violet-600 bg-violet-50", href: "/materials" },
     { icon: BookOpen, label: "Subjects", value: totalSubjects, color: "text-emerald-600 bg-emerald-50", href: "/subjects" },
     { icon: Clock, label: "Pending Teachers", value: pendingTeachers, color: "text-amber-600 bg-amber-50", href: "/teachers" },
-    { icon: Heart, label: "Total Donations", value: `₹${donationTotal.toLocaleString()}`, color: "text-pink-600 bg-pink-50", href: "/donations" },
     { icon: Download, label: "Total Downloads", value: downloadsTotal.toLocaleString(), color: "text-cyan-600 bg-cyan-50", href: "/materials" },
   ];
 
@@ -70,6 +60,11 @@ export default async function AdminDashboardPage() {
           </Link>
         )}
       </div>
+      {apiDown && (
+        <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2">
+          API is offline, so live stats are unavailable. Start Express on port 4000 and refresh.
+        </p>
+      )}
 
       {/* Stats grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -104,7 +99,7 @@ export default async function AdminDashboardPage() {
           </div>
           <div className="divide-y divide-slate-50">
             {recentUsers.map((user: any) => (
-              <div key={user._id.toString()} className="px-6 py-3 flex items-center gap-3">
+              <div key={String(user._id)} className="px-6 py-3 flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold">
                   {user.name?.charAt(0)?.toUpperCase()}
                 </div>
@@ -139,7 +134,6 @@ export default async function AdminDashboardPage() {
               { label: "Add Subject", href: "/subjects", icon: BookOpen, color: "bg-violet-50 text-violet-600 hover:bg-violet-100" },
               { label: "Manage Users", href: "/users", icon: Users, color: "bg-blue-50 text-blue-600 hover:bg-blue-100" },
               { label: "Review Teachers", href: "/teachers", icon: UserCheck, color: "bg-amber-50 text-amber-600 hover:bg-amber-100" },
-              { label: "View Donations", href: "/donations", icon: Heart, color: "bg-pink-50 text-pink-600 hover:bg-pink-100" },
               { label: "Add College", href: "/colleges", icon: TrendingUp, color: "bg-emerald-50 text-emerald-600 hover:bg-emerald-100" },
               { label: "All Materials", href: "/materials", icon: FileText, color: "bg-cyan-50 text-cyan-600 hover:bg-cyan-100" },
             ].map((action) => (

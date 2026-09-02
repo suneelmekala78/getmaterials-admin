@@ -12,7 +12,6 @@ import {
   HiOutlineSpeakerphone,
   HiOutlineStar,
   HiOutlineAcademicCap,
-  HiOutlineCash,
   HiOutlineChatAlt2,
   HiOutlineMail,
 } from "react-icons/hi";
@@ -23,9 +22,9 @@ const mobileMenuLinks = [
   { name: "Chapters", href: "/chapters", icon: HiOutlineCollection },
   { name: "Quizzes", href: "/quizzes", icon: HiOutlinePuzzle },
   { name: "Polls", href: "/polls", icon: HiOutlineSpeakerphone },
+  { name: "Notifications", href: "/notifications", icon: HiOutlineBell },
   { name: "Reviews", href: "/reviews", icon: HiOutlineStar },
   { name: "Colleges", href: "/colleges", icon: HiOutlineAcademicCap },
-  { name: "Donations", href: "/donations", icon: HiOutlineCash },
   { name: "Feedback", href: "/feedback", icon: HiOutlineChatAlt2 },
   { name: "Contacts", href: "/contacts", icon: HiOutlineMail },
 ];

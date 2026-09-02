@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Building2, Plus, Trash2, MapPin, Pencil, X, ChevronDown, ChevronRight, GraduationCap, GitBranch, Users, Calendar } from "lucide-react";
+import { Building2, Plus, Trash2, MapPin, Pencil, X, ChevronDown, ChevronRight, GraduationCap, GitBranch, Calendar, ImagePlus } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import toast from "react-hot-toast";
 
@@ -29,6 +29,8 @@ interface College {
   _id: string;
   name: string;
   code: string;
+  logo?: string;
+  banner?: string;
   location?: string;
   description?: string;
   status: string;
@@ -49,6 +51,12 @@ export default function AdminCollegesPage() {
 
   // College form
   const [form, setForm] = useState({ name: "", code: "", location: "", description: "" });
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState("");
+  const [bannerPreview, setBannerPreview] = useState("");
+  const [clearLogo, setClearLogo] = useState(false);
+  const [clearBanner, setClearBanner] = useState(false);
 
   // Program form
   const [showProgramForm, setShowProgramForm] = useState<string | null>(null);
@@ -78,6 +86,12 @@ export default function AdminCollegesPage() {
 
   const resetForm = () => {
     setForm({ name: "", code: "", location: "", description: "" });
+    setLogoFile(null);
+    setBannerFile(null);
+    setLogoPreview("");
+    setBannerPreview("");
+    setClearLogo(false);
+    setClearBanner(false);
     setEditingId(null);
     setShowForm(false);
   };
@@ -85,18 +99,46 @@ export default function AdminCollegesPage() {
   const startEdit = (c: College) => {
     setEditingId(c._id);
     setForm({ name: c.name, code: c.code, location: c.location || "", description: c.description || "" });
+    setLogoFile(null);
+    setBannerFile(null);
+    setLogoPreview(c.logo || "");
+    setBannerPreview(c.banner || "");
+    setClearLogo(false);
+    setClearBanner(false);
     setShowForm(true);
+  };
+
+  const pickImage = (kind: "logo" | "banner", file?: File) => {
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    if (kind === "logo") {
+      setLogoFile(file);
+      setLogoPreview(url);
+      setClearLogo(false);
+    } else {
+      setBannerFile(file);
+      setBannerPreview(url);
+      setClearBanner(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const method = editingId ? "PATCH" : "POST";
-      const body = editingId ? { id: editingId, ...form } : form;
+      const body = new FormData();
+      body.append("name", form.name);
+      body.append("code", form.code);
+      body.append("location", form.location);
+      body.append("description", form.description);
+      if (editingId) body.append("id", editingId);
+      if (logoFile) body.append("logo", logoFile);
+      if (bannerFile) body.append("banner", bannerFile);
+      if (clearLogo) body.append("clearLogo", "true");
+      if (clearBanner) body.append("clearBanner", "true");
+
       const res = await fetch("/api/colleges", {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        method: editingId ? "PATCH" : "POST",
+        body,
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -300,6 +342,68 @@ export default function AdminCollegesPage() {
                 <input type="text" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Brief description" className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20" />
               </div>
             </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Logo</label>
+                <p className="text-xs text-slate-400 mb-2">Square mark, shown on college cards. PNG or JPG, up to 5 MB.</p>
+                <label className="flex items-center gap-3 cursor-pointer rounded-xl border border-dashed border-slate-200 px-3 py-3 hover:bg-slate-50">
+                  <div className="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden flex items-center justify-center shrink-0">
+                    {logoPreview && !clearLogo ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={logoPreview} alt="" className="w-full h-full object-contain bg-white" />
+                    ) : (
+                      <ImagePlus className="w-5 h-5 text-slate-400" />
+                    )}
+                  </div>
+                  <span className="text-sm text-slate-600">{logoFile?.name || "Choose logo"}</span>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                    className="hidden"
+                    onChange={(e) => pickImage("logo", e.target.files?.[0])}
+                  />
+                </label>
+                {logoPreview && !clearLogo ? (
+                  <button
+                    type="button"
+                    onClick={() => { setLogoFile(null); setLogoPreview(""); setClearLogo(true); }}
+                    className="mt-2 text-xs text-red-500 hover:underline"
+                  >
+                    Remove logo
+                  </button>
+                ) : null}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Banner</label>
+                <p className="text-xs text-slate-400 mb-2">Wide cover, about 16:9. PNG or JPG, up to 5 MB.</p>
+                <label className="flex items-center gap-3 cursor-pointer rounded-xl border border-dashed border-slate-200 px-3 py-3 hover:bg-slate-50">
+                  <div className="w-24 h-12 rounded-xl bg-slate-100 overflow-hidden flex items-center justify-center shrink-0">
+                    {bannerPreview && !clearBanner ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={bannerPreview} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <ImagePlus className="w-5 h-5 text-slate-400" />
+                    )}
+                  </div>
+                  <span className="text-sm text-slate-600">{bannerFile?.name || "Choose banner"}</span>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={(e) => pickImage("banner", e.target.files?.[0])}
+                  />
+                </label>
+                {bannerPreview && !clearBanner ? (
+                  <button
+                    type="button"
+                    onClick={() => { setBannerFile(null); setBannerPreview(""); setClearBanner(true); }}
+                    className="mt-2 text-xs text-red-500 hover:underline"
+                  >
+                    Remove banner
+                  </button>
+                ) : null}
+              </div>
+            </div>
             <div className="flex items-center gap-3">
               <button type="submit" className="px-5 py-2.5 bg-violet-600 text-white font-medium text-sm rounded-xl hover:bg-violet-700 transition-colors">
                 {editingId ? "Update College" : "Save College"}
@@ -320,8 +424,13 @@ export default function AdminCollegesPage() {
                 {/* College Header */}
                 <div className="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-slate-50/50" onClick={() => setExpandedCollege(isExpanded ? null : college._id)}>
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-violet-50 rounded-xl flex items-center justify-center">
-                      <Building2 className="w-5 h-5 text-violet-600" />
+                    <div className="w-10 h-10 bg-violet-50 rounded-xl overflow-hidden flex items-center justify-center">
+                      {college.logo ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={college.logo} alt="" className="w-full h-full object-contain bg-white" />
+                      ) : (
+                        <Building2 className="w-5 h-5 text-violet-600" />
+                      )}
                     </div>
                     <div>
                       <h3 className="font-semibold text-slate-900">{college.name}</h3>

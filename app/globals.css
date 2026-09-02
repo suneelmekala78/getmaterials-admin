@@ -7,6 +7,10 @@
   --background: #ffffff;
   --foreground: #1a1a1a;
   --radius: 12px;
+  --scroll-size: 8px;
+  --scroll-thumb: #b100ff;
+  --scroll-thumb-hover: #8900cc;
+  --scroll-track: #f3e8ff;
 }
 
 @theme {
@@ -28,4 +32,40 @@ h1, h2, h3, h4, h5, h6 {
 
 button, a {
   transition: 0.2s ease;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+}
+
+*::-webkit-scrollbar {
+  width: var(--scroll-size);
+  height: var(--scroll-size);
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--scroll-track);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+  border-radius: 999px;
+  border: 2px solid var(--scroll-track);
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--scroll-thumb-hover);
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.gm-overlay {
+  --scroll-thumb: #d8b4fe;
+  --scroll-thumb-hover: #f3e8ff;
+  --scroll-track: rgba(255, 255, 255, 0.1);
 }
