@@ -1,11 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Mail, ShieldCheck, Loader2, Lock } from "lucide-react";
 import toast from "react-hot-toast";
 import { reportLoginDevice } from "@/lib/device-id";
+
+function loginErrorMessage(code?: string | null) {
+  if (code === "Configuration") {
+    return "Admin auth is misconfigured. Set AUTH_SECRET (or NEXTAUTH_SECRET) and API_INTERNAL_URL, then retry.";
+  }
+  if (code === "CredentialsSignin") {
+    return "Invalid email or password, or this email is not an admin.";
+  }
+  return "Invalid email or password, or this email is not an admin.";
+}
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -14,6 +24,12 @@ export default function AdminLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const fromAuth = params.get("error");
+    if (fromAuth) setError(loginErrorMessage(fromAuth));
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,8 +44,9 @@ export default function AdminLoginPage() {
       });
 
       if (result?.error) {
-        setError("Invalid email or password, or this email is not an admin.");
-        toast.error("Invalid email or password");
+        const msg = loginErrorMessage(result.error);
+        setError(msg);
+        toast.error(msg);
         return;
       }
 
