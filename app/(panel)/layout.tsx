@@ -4,6 +4,19 @@ import AdminSidebar from "@/components/AdminSidebar";
 import AdminTopbar from "@/components/AdminTopbar";
 import AdminBottomBar from "@/components/AdminBottomBar";
 
+export const dynamic = "force-dynamic";
+
+function isNextControlFlow(error: unknown) {
+  const digest = (error as { digest?: string } | null)?.digest;
+  return (
+    typeof digest === "string" &&
+    (digest === "DYNAMIC_SERVER_USAGE" ||
+      digest === "NEXT_REDIRECT" ||
+      digest === "NEXT_NOT_FOUND" ||
+      digest.startsWith("NEXT_"))
+  );
+}
+
 export default async function PanelLayout({
   children,
 }: {
@@ -13,6 +26,7 @@ export default async function PanelLayout({
   try {
     session = await auth();
   } catch (error) {
+    if (isNextControlFlow(error)) throw error;
     console.error("[panel-layout] auth failed:", error);
     redirect("/login");
   }

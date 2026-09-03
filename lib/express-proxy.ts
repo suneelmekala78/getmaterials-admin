@@ -19,6 +19,11 @@ export type AdminSessionUser = {
   status?: string;
 };
 
+type AdminSession = {
+  user?: AdminSessionUser;
+  accessToken?: string;
+};
+
 export async function signAdminAccessToken(user: AdminSessionUser) {
   const email = user.email || "";
   return new SignJWT({
@@ -38,8 +43,11 @@ export async function signAdminAccessToken(user: AdminSessionUser) {
 
 async function authorizationHeader() {
   try {
-    const session = await auth();
-    const user = session?.user as AdminSessionUser | undefined;
+    const session = (await auth()) as AdminSession | null;
+    if (session?.accessToken) {
+      return `Bearer ${session.accessToken}`;
+    }
+    const user = session?.user;
     if (!user?.email) return null;
     return `Bearer ${await signAdminAccessToken(user)}`;
   } catch {
