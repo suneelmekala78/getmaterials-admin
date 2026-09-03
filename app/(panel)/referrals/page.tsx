@@ -2,11 +2,21 @@ import { auth } from "@/lib/auth";
 import { adminApi } from "@/lib/express-proxy";
 import { redirect } from "next/navigation";
 import { ReferralDashboard } from "./ReferralDashboard";
+import { ApiOfflineBanner } from "@/components/ApiOfflineBanner";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Referral Tracking - Admin - GetMaterials",
+};
+
+const emptyReferralData = {
+  totalReferrals: 0,
+  sourceBreakdown: [],
+  referrerBreakdown: [],
+  campaignBreakdown: [],
+  recentReferrals: [],
+  dailySignups: [],
 };
 
 export default async function ReferralsPage() {
@@ -15,6 +25,19 @@ export default async function ReferralsPage() {
     redirect("/login");
   }
 
-  const data = await adminApi("/api/admin/referrals/analytics");
-  return <ReferralDashboard data={data} />;
+  let data = emptyReferralData;
+  let apiError = "";
+
+  try {
+    data = { ...emptyReferralData, ...(await adminApi("/api/admin/referrals/analytics")) };
+  } catch (error) {
+    apiError = error instanceof Error ? error.message : "API unavailable";
+  }
+
+  return (
+    <div className="space-y-6">
+      {apiError ? <ApiOfflineBanner detail={apiError} /> : null}
+      <ReferralDashboard data={data} />
+    </div>
+  );
 }

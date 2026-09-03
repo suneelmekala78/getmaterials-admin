@@ -2,14 +2,15 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { resolveApiOrigin } from "@/lib/api-origin";
 
-const API_ORIGIN = resolveApiOrigin();
-
 // Auth.js v5 reads AUTH_SECRET / AUTH_URL. Amplify and local env still use NEXTAUTH_*.
 if (!process.env.AUTH_SECRET && process.env.NEXTAUTH_SECRET) {
   process.env.AUTH_SECRET = process.env.NEXTAUTH_SECRET;
 }
 if (!process.env.AUTH_URL && process.env.NEXTAUTH_URL) {
   process.env.AUTH_URL = process.env.NEXTAUTH_URL;
+}
+if (!process.env.JWT_SECRET && (process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET)) {
+  process.env.JWT_SECRET = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
 }
 
 const authSecret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
@@ -31,7 +32,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           const password = credentials?.password as string;
           if (!email || !password) return null;
 
-          const res = await fetch(`${API_ORIGIN}/api/auth/admin/login`, {
+          const apiOrigin = resolveApiOrigin();
+          const res = await fetch(`${apiOrigin}/api/auth/admin/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email, password }),
@@ -50,7 +52,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             status: user.status || "active",
           };
         } catch (error) {
-          console.error("[admin-auth] authorize failed:", API_ORIGIN, error);
+          console.error("[admin-auth] authorize failed:", resolveApiOrigin(), error);
           return null;
         }
       },
@@ -68,14 +70,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.sub as string;
-        session.user.email = token.email as string;
-        session.user.name = (token.name as string) || "Admin";
-        (session.user as any).role = token.role || "admin";
-        (session.user as any).status = token.status || "active";
-      }
-      return session;
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: (token.sub as string) || "",
+          email: (token.email as string) || session.user?.email || "",
+          name: (token.name as string) || session.user?.name || "Admin",
+          role: (token.role as string) || "admin",
+          status: (token.status as string) || "active",
+        },
+      };
     },
   },
   pages: {

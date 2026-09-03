@@ -63,8 +63,13 @@ export function ReferralDashboard({ data }: Props) {
     setTimeout(() => setCopiedLink(""), 2000);
   };
 
-  const maxSource = data.sourceBreakdown[0]?.count || 1;
-  const maxReferrer = data.referrerBreakdown[0]?.count || 1;
+  const sourceBreakdown = data.sourceBreakdown || [];
+  const referrerBreakdown = data.referrerBreakdown || [];
+  const campaignBreakdown = data.campaignBreakdown || [];
+  const recentReferrals = data.recentReferrals || [];
+  const dailySignups = data.dailySignups || [];
+  const maxSource = sourceBreakdown[0]?.count || 1;
+  const maxReferrer = referrerBreakdown[0]?.count || 1;
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">
@@ -87,19 +92,19 @@ export function ReferralDashboard({ data }: Props) {
         <StatCard
           icon={Globe}
           label="Traffic Sources"
-          value={data.sourceBreakdown.length}
+          value={sourceBreakdown.length}
           color="text-blue-600 bg-blue-50"
         />
         <StatCard
           icon={UserCheck}
           label="Unique Referrers"
-          value={data.referrerBreakdown.length}
+          value={referrerBreakdown.length}
           color="text-emerald-600 bg-emerald-50"
         />
         <StatCard
           icon={TrendingUp}
           label="Active Campaigns"
-          value={data.campaignBreakdown.length}
+          value={campaignBreakdown.length}
           color="text-amber-600 bg-amber-50"
         />
       </div>
@@ -132,11 +137,11 @@ export function ReferralDashboard({ data }: Props) {
             <Globe className="w-5 h-5 text-blue-600" />
             Traffic Sources
           </h2>
-          {data.sourceBreakdown.length === 0 ? (
+          {sourceBreakdown.length === 0 ? (
             <p className="text-sm text-slate-400 py-4">No data yet</p>
           ) : (
             <div className="space-y-3">
-              {data.sourceBreakdown.map((item) => (
+              {sourceBreakdown.map((item) => (
                 <div key={item.source} className="flex items-center gap-3">
                   <span
                     className={`text-xs font-semibold px-2.5 py-1 rounded-full ${getSourceColor(item.source)}`}
@@ -166,11 +171,11 @@ export function ReferralDashboard({ data }: Props) {
             <UserCheck className="w-5 h-5 text-emerald-600" />
             Top Referrers (Friends / Influencers)
           </h2>
-          {data.referrerBreakdown.length === 0 ? (
+          {referrerBreakdown.length === 0 ? (
             <p className="text-sm text-slate-400 py-4">No referrer data yet</p>
           ) : (
             <div className="space-y-3">
-              {data.referrerBreakdown.map((item) => (
+              {referrerBreakdown.map((item) => (
                 <div key={item.referrer} className="flex items-center gap-3">
                   <span className="text-sm font-semibold text-slate-800 min-w-[100px] truncate">
                     {item.referrer}
@@ -205,14 +210,14 @@ export function ReferralDashboard({ data }: Props) {
       </div>
 
       {/* Campaign Breakdown */}
-      {data.campaignBreakdown.length > 0 && (
+      {campaignBreakdown.length > 0 && (
         <div className="bg-white rounded-2xl border border-slate-100 p-6">
           <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-amber-600" />
             Campaigns
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {data.campaignBreakdown.map((item) => (
+            {campaignBreakdown.map((item) => (
               <div
                 key={item.campaign}
                 className="flex items-center justify-between p-3 bg-slate-50 rounded-xl"
@@ -226,15 +231,15 @@ export function ReferralDashboard({ data }: Props) {
       )}
 
       {/* Daily Signups Chart (simple) */}
-      {data.dailySignups.length > 0 && (
+      {dailySignups.length > 0 && (
         <div className="bg-white rounded-2xl border border-slate-100 p-6">
           <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
             <Calendar className="w-5 h-5 text-violet-600" />
             Daily Signups (Last 30 Days)
           </h2>
           <div className="flex items-end gap-1 h-32">
-            {data.dailySignups.map((day) => {
-              const maxDay = Math.max(...data.dailySignups.map((d) => d.count));
+            {dailySignups.map((day) => {
+              const maxDay = Math.max(...dailySignups.map((d) => d.count));
               const height = maxDay > 0 ? (day.count / maxDay) * 100 : 0;
               return (
                 <div
@@ -254,8 +259,8 @@ export function ReferralDashboard({ data }: Props) {
             })}
           </div>
           <div className="flex justify-between mt-2 text-[10px] text-slate-400">
-            <span>{data.dailySignups[0]?.date}</span>
-            <span>{data.dailySignups[data.dailySignups.length - 1]?.date}</span>
+            <span>{dailySignups[0]?.date}</span>
+            <span>{dailySignups[dailySignups.length - 1]?.date}</span>
           </div>
         </div>
       )}
@@ -276,14 +281,14 @@ export function ReferralDashboard({ data }: Props) {
               </tr>
             </thead>
             <tbody>
-              {data.recentReferrals.length === 0 ? (
+              {recentReferrals.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="text-center py-8 text-slate-400">
                     No referral data yet. Share your referral links to start tracking!
                   </td>
                 </tr>
               ) : (
-                data.recentReferrals.map((r) => (
+                recentReferrals.map((r) => (
                   <tr key={r.id} className="border-b border-slate-50 hover:bg-slate-50">
                     <td className="py-2.5 px-3">
                       {r.user ? (

@@ -29,7 +29,8 @@ export default async function AdminEditMaterialPage({
   };
   try {
     data = await adminApi(`/api/admin/materials/${id}/edit-data`);
-  } catch {
+  } catch (error) {
+    console.error("[admin-edit-material] API failed:", error);
     notFound();
   }
 

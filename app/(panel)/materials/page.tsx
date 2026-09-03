@@ -1,6 +1,7 @@
 import { adminApi } from "@/lib/express-proxy";
 import { FileText } from "lucide-react";
 import { AdminMaterialsTable } from "@/components/AdminMaterialsTable";
+import { ApiOfflineBanner } from "@/components/ApiOfflineBanner";
 
 export const dynamic = "force-dynamic";
 
@@ -9,8 +10,15 @@ export const metadata = {
 };
 
 export default async function AdminMaterialsPage() {
-  const { materials } = await adminApi("/api/admin/materials");
-  const serialized = JSON.parse(JSON.stringify(materials || []));
+  let serialized: any[] = [];
+  let apiError = "";
+
+  try {
+    const { materials } = await adminApi("/api/admin/materials");
+    serialized = JSON.parse(JSON.stringify(materials || []));
+  } catch (error) {
+    apiError = error instanceof Error ? error.message : "API unavailable";
+  }
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -26,6 +34,8 @@ export default async function AdminMaterialsPage() {
           <span className="font-medium">{serialized.length} total</span>
         </div>
       </div>
+
+      {apiError ? <ApiOfflineBanner detail={apiError} /> : null}
 
       <AdminMaterialsTable materials={serialized} />
     </div>

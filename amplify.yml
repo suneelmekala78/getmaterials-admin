@@ -9,6 +9,7 @@ frontend:
         - (env | grep -E '^(NEXTAUTH_SECRET|NEXTAUTH_URL|AUTH_SECRET|AUTH_URL|JWT_SECRET|API_INTERNAL_URL|NEXT_PUBLIC_)' || true) >> .env.production
         - grep -q '^AUTH_SECRET=' .env.production || (grep '^NEXTAUTH_SECRET=' .env.production | sed 's/^NEXTAUTH_SECRET=/AUTH_SECRET=/' >> .env.production) || true
         - grep -q '^AUTH_URL=' .env.production || (grep '^NEXTAUTH_URL=' .env.production | sed 's/^NEXTAUTH_URL=/AUTH_URL=/' >> .env.production) || true
+        - grep -q '^JWT_SECRET=' .env.production || (grep '^AUTH_SECRET=' .env.production | sed 's/^AUTH_SECRET=/JWT_SECRET=/' >> .env.production) || true
         - npm run build
   artifacts:
     baseDirectory: .next

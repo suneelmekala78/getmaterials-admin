@@ -9,7 +9,13 @@ export default async function PanelLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
+  let session;
+  try {
+    session = await auth();
+  } catch (error) {
+    console.error("[panel-layout] auth failed:", error);
+    redirect("/login");
+  }
   if (!session?.user) redirect("/login");
 
   return (

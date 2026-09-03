@@ -1,4 +1,5 @@
 import { adminApi } from "@/lib/express-proxy";
+import { ApiOfflineBanner } from "@/components/ApiOfflineBanner";
 import {
   Users,
   FileText,
@@ -20,6 +21,7 @@ export default async function AdminDashboardPage() {
   let downloadsTotal = 0;
   let recentUsers: any[] = [];
   let apiDown = false;
+  let apiError = "";
 
   try {
     const data = await adminApi("/api/admin/dashboard");
@@ -29,8 +31,9 @@ export default async function AdminDashboardPage() {
     pendingTeachers = data.pendingTeachers || 0;
     downloadsTotal = data.downloadsTotal || 0;
     recentUsers = data.recentUsers || [];
-  } catch {
+  } catch (error) {
     apiDown = true;
+    apiError = error instanceof Error ? error.message : "";
   }
 
   const stats = [
@@ -60,11 +63,7 @@ export default async function AdminDashboardPage() {
           </Link>
         )}
       </div>
-      {apiDown && (
-        <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2">
-          API is offline, so live stats are unavailable. Start Express on port 4000 and refresh.
-        </p>
-      )}
+      {apiDown && <ApiOfflineBanner detail={apiError} />}
 
       {/* Stats grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

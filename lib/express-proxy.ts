@@ -3,13 +3,11 @@ import { auth } from "@/lib/auth";
 import { SignJWT } from "jose";
 import { resolveApiOrigin } from "@/lib/api-origin";
 
-export const API_ORIGIN = resolveApiOrigin();
-
 const getSecret = () =>
   new TextEncoder().encode(
     process.env.JWT_SECRET ||
-      process.env.NEXTAUTH_SECRET ||
       process.env.AUTH_SECRET ||
+      process.env.NEXTAUTH_SECRET ||
       "fallback-dev-secret"
   );
 
@@ -50,8 +48,9 @@ async function authorizationHeader() {
 }
 
 export async function proxyAdminToExpress(req: NextRequest, nestPath: string) {
+  const origin = resolveApiOrigin();
   const incoming = new URL(req.url);
-  const targetUrl = `${API_ORIGIN}${nestPath}${incoming.search}`;
+  const targetUrl = `${origin}${nestPath}${incoming.search}`;
 
   const headers = new Headers();
   const contentType = req.headers.get("content-type");
@@ -93,6 +92,7 @@ export async function adminApi<T = any>(
   path: string,
   init: RequestInit = {}
 ): Promise<T> {
+  const origin = resolveApiOrigin();
   const headers = new Headers(init.headers);
   if (!headers.has("content-type") && init.body) {
     headers.set("content-type", "application/json");
@@ -102,13 +102,17 @@ export async function adminApi<T = any>(
 
   let res: Response;
   try {
-    res = await fetch(`${API_ORIGIN}${path}`, { ...init, headers });
-  } catch {
-    throw new Error("API server unavailable. Please try again.");
+    res = await fetch(`${origin}${path}`, { ...init, headers });
+  } catch (error) {
+    console.error("[adminApi] unreachable", origin, path, error);
+    throw new Error(`API unreachable at ${origin}`);
   }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(data.error || `Request failed (${res.status})`);
+    console.error("[adminApi] failed", origin, path, res.status, data);
+    throw new Error(
+      data.error || `API ${res.status} from ${origin}`
+    );
   }
   return data as T;
 }
