@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { SignJWT } from "jose";
+import { resolveApiOrigin } from "@/lib/api-origin";
 
-export const API_ORIGIN =
-  process.env.API_INTERNAL_URL ||
-  process.env.NEXT_PUBLIC_API_URL ||
-  "http://localhost:4000";
+export const API_ORIGIN = resolveApiOrigin();
 
 const getSecret = () =>
   new TextEncoder().encode(
@@ -73,7 +71,7 @@ export async function proxyAdminToExpress(req: NextRequest, nestPath: string) {
   } catch (error) {
     console.error("Admin API proxy error:", targetUrl, error);
     return NextResponse.json(
-      { error: "API server unavailable. Is Express running on port 4000?" },
+      { error: "API server unavailable. Please try again." },
       { status: 502 }
     );
   }
@@ -106,7 +104,7 @@ export async function adminApi<T = any>(
   try {
     res = await fetch(`${API_ORIGIN}${path}`, { ...init, headers });
   } catch {
-    throw new Error("API server unavailable. Is Express running on port 4000?");
+    throw new Error("API server unavailable. Please try again.");
   }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {

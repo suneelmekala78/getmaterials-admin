@@ -1,29 +1,27 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import { resolveApiOrigin } from "@/lib/api-origin";
 
-const API_ORIGIN =
-  process.env.API_INTERNAL_URL ||
-  process.env.NEXT_PUBLIC_API_URL ||
-  "http://localhost:4000";
+const API_ORIGIN = resolveApiOrigin();
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Credentials({
-      id: "otp",
-      name: "OTP",
+      id: "credentials",
+      name: "Email",
       credentials: {
         email: { label: "Email", type: "email" },
-        otp: { label: "OTP", type: "text" },
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         const email = (credentials?.email as string)?.toLowerCase().trim();
-        const code = (credentials?.otp as string)?.trim();
-        if (!email || !code) return null;
+        const password = credentials?.password as string;
+        if (!email || !password) return null;
 
-        const res = await fetch(`${API_ORIGIN}/api/auth/admin/verify-otp`, {
+        const res = await fetch(`${API_ORIGIN}/api/auth/admin/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, otp: code }),
+          body: JSON.stringify({ email, password }),
         });
         if (!res.ok) return null;
 
@@ -68,7 +66,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   session: {
     strategy: "jwt",
-    maxAge: 7 * 24 * 60 * 60,
+    maxAge: 365 * 24 * 60 * 60,
   },
   trustHost: true,
   cookies: {

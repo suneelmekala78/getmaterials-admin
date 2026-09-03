@@ -14,6 +14,16 @@ interface Teacher {
   assignedColleges?: { _id: string; name: string; code: string }[];
 }
 
+interface Application {
+  _id: string;
+  reason?: string;
+  qualifications?: string;
+  requestedCollegeName?: string;
+  createdAt: string;
+  user?: { _id: string; name: string; email: string };
+  college?: { _id: string; name: string; code: string };
+}
+
 interface College {
   _id: string;
   name: string;
@@ -23,6 +33,7 @@ interface College {
 export default function TeachersPage() {
   const [pendingTeachers, setPendingTeachers] = useState<Teacher[]>([]);
   const [approvedTeachers, setApprovedTeachers] = useState<Teacher[]>([]);
+  const [applications, setApplications] = useState<Application[]>([]);
   const [colleges, setColleges] = useState<College[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -44,11 +55,52 @@ export default function TeachersPage() {
       ]);
       setPendingTeachers(teachersRes.pending || []);
       setApprovedTeachers(teachersRes.approved || []);
+      setApplications(teachersRes.applications || []);
       setColleges(collegesRes.colleges || []);
     } catch {
       toast.error("Failed to load data");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleApproveApplication = async (id: string) => {
+    setActionLoading(id);
+    try {
+      const res = await fetch(`/api/admin/role-change-requests/${id}/approve`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        toast.success("Teacher request approved");
+        fetchData();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || "Failed to approve");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleRejectApplication = async (id: string) => {
+    setActionLoading(id);
+    try {
+      const res = await fetch(`/api/admin/role-change-requests/${id}/reject`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        toast.success("Teacher request rejected — user stays a student");
+        fetchData();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || "Failed to reject");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -140,7 +192,75 @@ export default function TeachersPage() {
         </p>
       </div>
 
-      {/* Pending approvals */}
+      {/* Student → teacher applications */}
+      <div className="bg-white rounded-2xl border border-slate-100">
+        <div className="px-6 py-4 border-b border-slate-100">
+          <h2 className="text-lg font-semibold text-slate-900">
+            Teacher requests ({applications.length})
+          </h2>
+          <p className="text-xs text-slate-500 mt-1">
+            Students who applied from their profile. Rejecting keeps their student access.
+          </p>
+        </div>
+        {applications.length > 0 ? (
+          <div className="divide-y divide-slate-50">
+            {applications.map((app) => (
+              <div key={app._id} className="px-6 py-4 flex items-start gap-4">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-400 to-fuchsia-400 flex items-center justify-center text-white text-sm font-semibold shrink-0">
+                  {app.user?.name?.charAt(0)?.toUpperCase() || "T"}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-slate-900">{app.user?.name}</p>
+                  <p className="text-xs text-slate-500 flex items-center gap-1">
+                    <Mail className="w-3 h-3" /> {app.user?.email}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                    <Building2 className="w-3 h-3" />
+                    {app.college
+                      ? `${app.college.name}${app.college.code ? ` (${app.college.code})` : ""}`
+                      : app.requestedCollegeName
+                        ? `Not listed — requested “${app.requestedCollegeName}”`
+                        : "No college selected"}
+                  </p>
+                  {app.reason && (
+                    <p className="text-xs text-slate-600 mt-1">{app.reason}</p>
+                  )}
+                  {app.qualifications && (
+                    <p className="text-xs text-slate-400 mt-0.5">{app.qualifications}</p>
+                  )}
+                </div>
+                <span className="text-xs text-slate-400 shrink-0">
+                  {new Date(app.createdAt).toLocaleDateString()}
+                </span>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => handleApproveApplication(app._id)}
+                    disabled={actionLoading === app._id}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-700 text-xs font-medium rounded-lg hover:bg-emerald-100 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    <UserCheck className="w-3.5 h-3.5" /> Approve
+                  </button>
+                  <button
+                    onClick={() => handleRejectApplication(app._id)}
+                    disabled={actionLoading === app._id}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-700 text-xs font-medium rounded-lg hover:bg-red-100 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    <UserX className="w-3.5 h-3.5" /> Reject
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-12 text-center">
+            <UserCheck className="w-12 h-12 text-slate-200 mx-auto mb-3" />
+            <p className="text-sm text-slate-500">No pending teacher requests</p>
+          </div>
+        )}
+      </div>
+
+      {/* Legacy pending teacher signups */}
+      {pendingTeachers.length > 0 && (
       <div className="bg-white rounded-2xl border border-slate-100">
         <div className="px-6 py-4 border-b border-slate-100">
           <h2 className="text-lg font-semibold text-slate-900">
@@ -193,6 +313,7 @@ export default function TeachersPage() {
           </div>
         )}
       </div>
+      )}
 
       {/* Approved teachers with college assignment */}
       <div className="bg-white rounded-2xl border border-slate-100">
