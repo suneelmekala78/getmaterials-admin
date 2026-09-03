@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Building2, Plus, Trash2, MapPin, Pencil, X, ChevronDown, ChevronRight, GraduationCap, GitBranch, Calendar, ImagePlus } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { uploadBrowserFile } from "@/lib/upload-file";
 import toast from "react-hot-toast";
 
 interface CollegeProgram {
@@ -125,20 +126,31 @@ export default function AdminCollegesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const body = new FormData();
-      body.append("name", form.name);
-      body.append("code", form.code);
-      body.append("location", form.location);
-      body.append("description", form.description);
-      if (editingId) body.append("id", editingId);
-      if (logoFile) body.append("logo", logoFile);
-      if (bannerFile) body.append("banner", bannerFile);
-      if (clearLogo) body.append("clearLogo", "true");
-      if (clearBanner) body.append("clearBanner", "true");
+      let logoUrl: string | undefined;
+      let bannerUrl: string | undefined;
+      if (logoFile) {
+        const uploaded = await uploadBrowserFile(logoFile, "college-logos");
+        logoUrl = uploaded.fileUrl;
+      }
+      if (bannerFile) {
+        const uploaded = await uploadBrowserFile(bannerFile, "college-banners");
+        bannerUrl = uploaded.fileUrl;
+      }
 
       const res = await fetch("/api/colleges", {
         method: editingId ? "PATCH" : "POST",
-        body,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name,
+          code: form.code,
+          location: form.location,
+          description: form.description,
+          ...(editingId ? { id: editingId } : {}),
+          ...(logoUrl ? { logoUrl } : {}),
+          ...(bannerUrl ? { bannerUrl } : {}),
+          ...(clearLogo ? { clearLogo: true } : {}),
+          ...(clearBanner ? { clearBanner: true } : {}),
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);

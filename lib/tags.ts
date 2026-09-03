@@ -30,3 +30,11 @@ export function normalizeTags(raw: unknown): string[] {
 
   return parts;
 }
+
+export function mergeTags(existing: string[], raw: unknown): string[] {
+  const next = [...existing];
+  for (const tag of normalizeTags(raw)) {
+    if (!next.includes(tag) && next.length < TAG_MAX) next.push(tag);
+  }
+  return next;
+}

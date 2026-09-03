@@ -26,7 +26,7 @@ import {
   X,
 } from "lucide-react";
 import { uploadBrowserFile } from "@/lib/upload-file";
-import { normalizeTags } from "@/lib/tags";
+import { mergeTags, normalizeTags } from "@/lib/tags";
 import toast from "react-hot-toast";
 
 interface Subject {
@@ -273,14 +273,14 @@ export function MaterialForm({
   };
 
   const addTag = (value: string) => {
-    const next = value.trim().toLowerCase();
-    if (!next) return;
-    if (tags.length >= TAG_MAX) {
+    const incoming = normalizeTags(value);
+    if (!incoming.length) return;
+    const next = mergeTags(tags, value);
+    const unused = incoming.filter((tag) => !tags.includes(tag)).length;
+    if (next.length < tags.length + unused) {
       toast.error("Maximum 10 tags");
-      return;
     }
-    if (tags.includes(next)) return;
-    setTags([...tags, next]);
+    setTags(next);
     setTagDraft("");
   };
 
@@ -424,12 +424,7 @@ export function MaterialForm({
       return;
     }
 
-    const resolvedTags = (() => {
-      const next = [...tags];
-      const draft = tagDraft.trim().toLowerCase();
-      if (draft && !next.includes(draft) && next.length < TAG_MAX) next.push(draft);
-      return next;
-    })();
+    const resolvedTags = mergeTags(tags, tagDraft);
     setTagDraft("");
     if (resolvedTags.length !== tags.length) setTags(resolvedTags);
 
@@ -1037,7 +1032,14 @@ export function MaterialForm({
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === ",") {
                 e.preventDefault();
-                addTag(tagDraft.replace(",", ""));
+                addTag(tagDraft);
+              }
+            }}
+            onPaste={(e) => {
+              const text = e.clipboardData.getData("text");
+              if (/[,#\n]/.test(text)) {
+                e.preventDefault();
+                addTag(`${tagDraft}${text}`);
               }
             }}
             onBlur={() => {
@@ -1046,7 +1048,9 @@ export function MaterialForm({
             placeholder="Add tags (e.g., data structures, algorithms)"
             className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm"
           />
-          <p className="text-xs text-slate-400 mt-1.5">Add up to {TAG_MAX} tags. Press Enter after each tag.</p>
+          <p className="text-xs text-slate-400 mt-1.5">
+            Add up to {TAG_MAX} tags. Press Enter or comma after each tag, or paste a list.
+          </p>
         </div>
 
         <div>
