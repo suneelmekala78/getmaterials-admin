@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { uploadBrowserFile } from "@/lib/upload-file";
 import { mergeTags, normalizeTags } from "@/lib/tags";
+import { RichTextEditor } from "@/components/RichTextEditor";
 import toast from "react-hot-toast";
 
 interface Subject {
@@ -188,6 +189,7 @@ export function MaterialForm({
   const [subjects, setSubjects] = useState(initialSubjects);
   const [chapters, setChapters] = useState(initialChapters);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [editorKey, setEditorKey] = useState(0);
   const [formData, setFormData] = useState({
     title: initialMaterial?.title || "",
     description: initialMaterial?.description || "",
@@ -257,11 +259,11 @@ export function MaterialForm({
   const collegeResults = availableColleges.filter((college) => {
     const q = collegeQuery.trim().toLowerCase();
     if (!q) return true;
-    return college.name.toLowerCase().includes(q) || college.code.toLowerCase().includes(q);
+    return college.name.toLowerCase().includes(q) || String(college.code || "").toLowerCase().includes(q);
   });
 
   const descLength = plainLength(formData.description);
-  const canCreateCatalog = userRole === "teacher" || userRole === "admin";
+  const canCreateCatalog = Boolean(userRole);
   const needsChapter = false;
 
   const clearFieldError = (field: string) => {
@@ -543,6 +545,7 @@ export function MaterialForm({
     filesRef.current.clear();
     setSuccess(null);
     setFieldErrors({});
+    setEditorKey((key) => key + 1);
     setFormData({
       title: "",
       description: "",
@@ -813,7 +816,7 @@ export function MaterialForm({
                 >
                   <Check className="w-3.5 h-3.5" />
                   {college.name}
-                  <span className="text-violet-400">({college.code})</span>
+                  {college.code ? <span className="text-violet-400">({college.code})</span> : null}
                   <button
                     type="button"
                     onClick={() =>
@@ -881,7 +884,7 @@ export function MaterialForm({
                   >
                     <span>
                       <span className="font-medium text-slate-800">{college.name}</span>
-                      <span className="text-slate-400"> ({college.code})</span>
+                      {college.code ? <span className="text-slate-400"> ({college.code})</span> : null}
                     </span>
                     {attached ? <Check className="w-4 h-4 text-violet-600 shrink-0" /> : null}
                   </button>
@@ -1001,12 +1004,11 @@ export function MaterialForm({
           <label className="block text-sm font-medium text-slate-700 mb-1.5">
             Description <span className="text-slate-400">(optional)</span>
           </label>
-          <textarea
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          <RichTextEditor
+            key={`${initialMaterial?.id || "new"}-${editorKey}`}
+            content={formData.description}
+            onChange={(html) => setFormData({ ...formData, description: html })}
             placeholder="Write a brief description about this material..."
-            rows={6}
-            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
           />
           <p className="text-xs text-slate-400 text-right mt-1">
             {descLength}/{DESC_MAX}
@@ -1181,7 +1183,8 @@ export function MaterialForm({
               onClick={() => thumbnailInputRef.current?.click()}
               className="w-full rounded-2xl border-2 border-dashed border-slate-200 hover:border-violet-300 p-6 text-center"
             >
-              <ImageIcon className="w-8 h-8 text-violet-400 mx-auto mb-2" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/images/default-thumbnail.png" alt="" className="w-20 h-14 rounded-lg object-cover mx-auto mb-3" />
               <p className="text-sm font-semibold text-slate-800">Upload thumbnail / banner</p>
               <p className="text-xs text-slate-400 mt-1">JPG, PNG or WebP · max 5MB</p>
             </button>

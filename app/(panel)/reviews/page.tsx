@@ -126,9 +126,12 @@ export default function AdminReviewsPage() {
               className={`bg-white rounded-xl border p-5 ${review.isApproved ? "border-slate-100" : "border-red-100 bg-red-50/30"}`}
             >
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                  {review.user?.name?.charAt(0)?.toUpperCase() || "?"}
-                </div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={review.user?.avatar || "/images/default-profile-pic.png"}
+                  alt=""
+                  className="w-10 h-10 rounded-full object-cover shrink-0"
+                />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-semibold text-slate-900">{review.user?.name}</span>

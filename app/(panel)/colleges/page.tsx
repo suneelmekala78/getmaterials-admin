@@ -29,7 +29,8 @@ interface CollegeBatch {
 interface College {
   _id: string;
   name: string;
-  code: string;
+  code?: string;
+  slug?: string;
   logo?: string;
   banner?: string;
   location?: string;
@@ -99,7 +100,7 @@ export default function AdminCollegesPage() {
 
   const startEdit = (c: College) => {
     setEditingId(c._id);
-    setForm({ name: c.name, code: c.code, location: c.location || "", description: c.description || "" });
+    setForm({ name: c.name, code: c.code || "", location: c.location || "", description: c.description || "" });
     setLogoFile(null);
     setBannerFile(null);
     setLogoPreview(c.logo || "");
@@ -342,8 +343,9 @@ export default function AdminCollegesPage() {
                 <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="College name" required className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Code *</label>
-                <input type="text" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="e.g., NIT-W" required className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20" />
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Official code</label>
+                <input type="text" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="e.g. NIT-W, optional" className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20" />
+                <p className="text-[11px] text-slate-400 mt-1">Optional. Use this for EAMCET/JEE/university codes. Degree, intermediate, and IT colleges can leave it blank — we will generate a URL key from the name.</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">Location</label>
@@ -447,7 +449,7 @@ export default function AdminCollegesPage() {
                     <div>
                       <h3 className="font-semibold text-slate-900">{college.name}</h3>
                       <div className="flex items-center gap-3 mt-0.5 text-xs text-slate-500">
-                        <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded">{college.code}</span>
+                        {college.code ? <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded">{college.code}</span> : <span className="text-slate-400">No official code</span>}
                         {college.location && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{college.location}</span>}
                         <span>{college.programs?.length || 0} programs</span>
                         <span>{college.branches?.length || 0} branches</span>

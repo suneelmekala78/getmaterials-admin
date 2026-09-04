@@ -45,7 +45,7 @@ export function AssignCollegesModal({
     if (!q) return colleges;
     return colleges.filter(
       (college) =>
-        college.name.toLowerCase().includes(q) || college.code.toLowerCase().includes(q)
+        college.name.toLowerCase().includes(q) || String(college.code || "").toLowerCase().includes(q)
     );
   }, [colleges, query]);
 
@@ -93,7 +93,7 @@ export function AssignCollegesModal({
                 <input type="checkbox" checked={checked} onChange={() => toggle(id)} />
                 <span className="min-w-0">
                   <span className="block text-sm font-medium text-slate-900 truncate">{college.name}</span>
-                  <span className="text-[11px] text-slate-400">{college.code}</span>
+                  {college.code ? <span className="text-[11px] text-slate-400">{college.code}</span> : null}
                 </span>
               </label>
             );

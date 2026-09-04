@@ -12,6 +12,7 @@ type Material = {
   title: string;
   status: string;
   type: string;
+  thumbnailUrl?: string;
   views?: number;
   subject?: { name?: string };
   uploadedBy?: { name?: string; email?: string };
@@ -203,7 +204,6 @@ export function AdminMaterialsTable({
             <tbody className="divide-y divide-slate-50">
               {visible.map((material) => {
                 const typeInfo = typeConfig[material.type] || typeConfig.pdf;
-                const TypeIcon = typeInfo.icon;
                 const labels = collegeLabels(material);
                 const id = String(material._id);
                 return (
@@ -213,8 +213,13 @@ export function AdminMaterialsTable({
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <div className={`w-9 h-9 rounded-lg ${typeInfo.color} flex items-center justify-center shrink-0`}>
-                          <TypeIcon className="w-4 h-4" />
+                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-100 shrink-0">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={material.thumbnailUrl || "/images/default-thumbnail.png"}
+                            alt=""
+                            className="w-full h-full object-cover"
+                          />
                         </div>
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-slate-900 truncate max-w-[220px]">{material.title}</p>

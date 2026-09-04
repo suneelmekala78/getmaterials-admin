@@ -402,7 +402,7 @@ export default function TeachersPage() {
                     />
                     <div>
                       <p className="text-sm font-medium text-slate-900">{college.name}</p>
-                      <p className="text-xs text-slate-500">{college.code}</p>
+                      <p className="text-xs text-slate-500">{college.code || "No official code"}</p>
                     </div>
                   </label>
                 ))
