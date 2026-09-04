@@ -10,6 +10,7 @@ import {
   Download,
 } from "lucide-react";
 import Link from "next/link";
+import { UserAvatar } from "@/components/UserAvatar";
 
 export const dynamic = "force-dynamic";
 
@@ -99,9 +100,7 @@ export default async function AdminDashboardPage() {
           <div className="divide-y divide-slate-50">
             {recentUsers.map((user: any) => (
               <div key={String(user._id)} className="px-6 py-3 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold">
-                  {user.name?.charAt(0)?.toUpperCase()}
-                </div>
+                <UserAvatar name={user.name} image={user.avatar} role={user.role} size={36} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-slate-900 truncate">{user.name}</p>
                   <p className="text-xs text-slate-500">{user.email}</p>

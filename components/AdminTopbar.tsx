@@ -16,6 +16,8 @@ import {
   HiOutlineMail,
 } from "react-icons/hi";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { UserAvatar } from "@/components/UserAvatar";
+import { useSession } from "next-auth/react";
 
 const mobileMenuLinks = [
   { name: "Subjects", href: "/subjects", icon: HiOutlineBookOpen },
@@ -31,6 +33,8 @@ const mobileMenuLinks = [
 
 const AdminTopbar = () => {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const user = session?.user as { name?: string; image?: string; role?: string } | undefined;
   const [menuOpen, setMenuOpen] = useState(false);
   const [showLogout, setShowLogout] = useState(false);
 
@@ -54,9 +58,7 @@ const AdminTopbar = () => {
           <a href={process.env.NEXT_PUBLIC_SITE_URL || "https://getmaterials.in"} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-[var(--primary)] hidden sm:block">
             View Site
           </a>
-          <div className="w-8 h-8 rounded-full bg-[var(--primary)] text-white flex items-center justify-center font-bold">
-            A
-          </div>
+          <UserAvatar name={user?.name || "Admin"} image={user?.image} role={user?.role || "admin"} size={32} />
         </div>
       </header>
 

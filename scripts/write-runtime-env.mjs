@@ -11,6 +11,7 @@ const KEYS = [
   "AUTH_SECRET",
   "AUTH_URL",
   "JWT_SECRET",
+  "INTERNAL_API_SECRET",
   "API_INTERNAL_URL",
   "NODE_ENV",
 ];

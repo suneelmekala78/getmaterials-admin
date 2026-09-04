@@ -3,12 +3,14 @@
 import { useState, useEffect } from "react";
 import { HiOutlineUsers, HiOutlineSearch, HiOutlineShieldCheck, HiOutlineBan, HiOutlineTrash, HiOutlineCheckCircle } from "react-icons/hi";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { UserAvatar } from "@/components/UserAvatar";
 import toast from "react-hot-toast";
 
 interface UserItem {
   _id: string;
   name: string;
   email: string;
+  avatar?: string;
   role: string;
   status: string;
   createdAt: string;
@@ -168,9 +170,7 @@ export default function AdminUsersPage() {
                 <tr key={user._id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                        {user.name?.charAt(0)?.toUpperCase() || "?"}
-                      </div>
+                      <UserAvatar name={user.name} image={user.avatar} role={user.role} size={36} />
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-slate-900 truncate">{user.name}</p>
                         <p className="text-xs text-slate-500 truncate">{user.email}</p>

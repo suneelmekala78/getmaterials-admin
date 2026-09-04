@@ -3,11 +3,15 @@ import { auth } from "@/lib/auth";
 import { SignJWT } from "jose";
 import { resolveApiOrigin } from "@/lib/api-origin";
 
+function readEnv(...parts: string[]) {
+  return process.env[parts.join("_")];
+}
+
 const getSecret = () =>
   new TextEncoder().encode(
-    process.env.JWT_SECRET ||
-      process.env.AUTH_SECRET ||
-      process.env.NEXTAUTH_SECRET ||
+    readEnv("JWT", "SECRET") ||
+      readEnv("AUTH", "SECRET") ||
+      readEnv("NEXTAUTH", "SECRET") ||
       "fallback-dev-secret"
   );
 

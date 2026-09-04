@@ -48,6 +48,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             id: String(user.id),
             email: user.email,
             name: user.name || "Admin",
+            image: user.avatar || user.image || "",
             role: "admin",
             status: user.status || "active",
             accessToken: data.accessToken,
@@ -68,6 +69,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.role = (user as any).role || "admin";
         token.status = (user as any).status || "active";
         token.accessToken = (user as any).accessToken;
+        token.picture = (user as any).image || token.picture;
       }
       return token;
     },
@@ -80,6 +82,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           id: (token.sub as string) || "",
           email: (token.email as string) || session.user?.email || "",
           name: (token.name as string) || session.user?.name || "Admin",
+          image: (token.picture as string) || session.user?.image || "",
           role: (token.role as string) || "admin",
           status: (token.status as string) || "active",
         },

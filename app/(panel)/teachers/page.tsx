@@ -3,11 +3,13 @@
 import { useState, useEffect } from "react";
 import { UserCheck, UserX, Mail, Building2, X, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
+import { UserAvatar } from "@/components/UserAvatar";
 
 interface Teacher {
   _id: string;
   name: string;
   email: string;
+  avatar?: string;
   qualifications?: string;
   status: string;
   createdAt: string;
@@ -20,7 +22,7 @@ interface Application {
   qualifications?: string;
   requestedCollegeName?: string;
   createdAt: string;
-  user?: { _id: string; name: string; email: string };
+  user?: { _id: string; name: string; email: string; avatar?: string };
   college?: { _id: string; name: string; code: string };
 }
 
@@ -206,9 +208,7 @@ export default function TeachersPage() {
           <div className="divide-y divide-slate-50">
             {applications.map((app) => (
               <div key={app._id} className="px-6 py-4 flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-400 to-fuchsia-400 flex items-center justify-center text-white text-sm font-semibold shrink-0">
-                  {app.user?.name?.charAt(0)?.toUpperCase() || "T"}
-                </div>
+                <UserAvatar name={app.user?.name} image={app.user?.avatar} role="student" size={40} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-slate-900">{app.user?.name}</p>
                   <p className="text-xs text-slate-500 flex items-center gap-1">
@@ -272,9 +272,7 @@ export default function TeachersPage() {
           <div className="divide-y divide-slate-50">
             {pendingTeachers.map((teacher) => (
               <div key={teacher._id} className="px-6 py-4 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-400 flex items-center justify-center text-white text-sm font-semibold">
-                  {teacher.name?.charAt(0)?.toUpperCase()}
-                </div>
+                <UserAvatar name={teacher.name} image={teacher.avatar} role="teacher" size={40} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-slate-900">{teacher.name}</p>
                   <p className="text-xs text-slate-500 flex items-center gap-1">
@@ -326,9 +324,7 @@ export default function TeachersPage() {
           <div className="divide-y divide-slate-50">
             {approvedTeachers.map((teacher) => (
               <div key={teacher._id} className="px-6 py-4 flex items-center gap-4">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-400 to-teal-400 flex items-center justify-center text-white text-xs font-semibold">
-                  {teacher.name?.charAt(0)?.toUpperCase()}
-                </div>
+                <UserAvatar name={teacher.name} image={teacher.avatar} role="teacher" size={36} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-slate-900">{teacher.name}</p>
                   <p className="text-xs text-slate-500">{teacher.email}</p>
