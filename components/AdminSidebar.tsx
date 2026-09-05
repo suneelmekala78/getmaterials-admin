@@ -23,6 +23,7 @@ import {
   HiOutlineClipboardList,
   HiOutlineTrendingUp,
   HiOutlineBell,
+  HiOutlineTrash,
 } from "react-icons/hi";
 
 const links = [
@@ -38,6 +39,7 @@ const links = [
   { name: "Reviews", href: "/reviews", icon: HiOutlineStar },
   { name: "Teachers", href: "/teachers", icon: HiOutlineUserGroup },
   { name: "Users", href: "/users", icon: HiOutlineUsers },
+  { name: "Account deletions", href: "/account-deletions", icon: HiOutlineTrash },
   { name: "Feedback", href: "/feedback", icon: HiOutlineChatAlt2 },
   { name: "Contacts", href: "/contacts", icon: HiOutlineMail },
   { name: "Referrals", href: "/referrals", icon: HiOutlineTrendingUp },
