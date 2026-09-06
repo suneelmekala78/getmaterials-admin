@@ -158,6 +158,7 @@ export default function AdminUsersPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/50">
+                <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-12">#</th>
                 <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">User</th>
                 <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Role</th>
                 <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
@@ -166,8 +167,9 @@ export default function AdminUsersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {filtered.map((user) => (
+              {filtered.map((user, index) => (
                 <tr key={user._id} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="px-5 py-4 text-xs text-slate-400 tabular-nums">{index + 1}</td>
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
                       <UserAvatar name={user.name} image={user.avatar} role={user.role} size={36} />
@@ -195,7 +197,11 @@ export default function AdminUsersPage() {
                     </span>
                   </td>
                   <td className="px-5 py-4 text-xs text-slate-500">
-                    {new Date(user.createdAt).toLocaleDateString()}
+                    {new Date(user.createdAt).toLocaleDateString("en-GB", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
                   </td>
                   <td className="px-5 py-4 text-right">
                     <div className="flex items-center justify-end gap-1">

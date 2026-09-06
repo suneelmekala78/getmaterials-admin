@@ -144,6 +144,7 @@ export default function QuizzesPage() {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b border-slate-100">
               <tr>
+                <th className="text-left px-6 py-3 font-semibold text-slate-600 w-12">#</th>
                 <th className="text-left px-6 py-3 font-semibold text-slate-600">Title</th>
                 <th className="text-left px-6 py-3 font-semibold text-slate-600">Subject</th>
                 <th className="text-left px-6 py-3 font-semibold text-slate-600">Questions</th>
@@ -153,8 +154,9 @@ export default function QuizzesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {quizzes.map((quiz) => (
+              {quizzes.map((quiz, index) => (
                 <tr key={quiz._id} className="hover:bg-slate-50">
+                  <td className="px-6 py-4 text-xs text-slate-400 tabular-nums">{index + 1}</td>
                   <td className="px-6 py-4">
                     <p className="font-medium text-slate-900">{quiz.title}</p>
                     {quiz.chapter && (

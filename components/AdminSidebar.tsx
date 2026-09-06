@@ -24,6 +24,7 @@ import {
   HiOutlineTrendingUp,
   HiOutlineBell,
   HiOutlineTrash,
+  HiOutlineShieldCheck,
 } from "react-icons/hi";
 
 const links = [
@@ -43,6 +44,7 @@ const links = [
   { name: "Feedback", href: "/feedback", icon: HiOutlineChatAlt2 },
   { name: "Contacts", href: "/contacts", icon: HiOutlineMail },
   { name: "Referrals", href: "/referrals", icon: HiOutlineTrendingUp },
+  { name: "Email blocklist", href: "/email-blocklist", icon: HiOutlineShieldCheck },
   { name: "Settings", href: "/settings", icon: HiOutlineCog },
 ];
 

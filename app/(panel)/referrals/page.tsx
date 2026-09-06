@@ -11,10 +11,12 @@ export const metadata = {
 };
 
 const emptyReferralData = {
+  totalUsers: 0,
   totalReferrals: 0,
   sourceBreakdown: [],
   referrerBreakdown: [],
   campaignBreakdown: [],
+  topSharers: [],
   recentReferrals: [],
   dailySignups: [],
 };

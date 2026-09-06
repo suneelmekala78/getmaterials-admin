@@ -465,6 +465,7 @@ export default function CollegeAssignmentsPage() {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b border-slate-100">
               <tr>
+                <th className="text-left px-5 py-3 font-semibold text-slate-600 w-12">#</th>
                 <th className="text-left px-5 py-3 font-semibold text-slate-600">College</th>
                 <th className="text-left px-5 py-3 font-semibold text-slate-600">Subject</th>
                 <th className="text-left px-5 py-3 font-semibold text-slate-600">Program</th>
@@ -477,8 +478,9 @@ export default function CollegeAssignmentsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredAssignments.map((a) => (
+              {filteredAssignments.map((a, index) => (
                 <tr key={a._id} className="hover:bg-slate-50">
+                  <td className="px-5 py-3 text-xs text-slate-400 tabular-nums">{index + 1}</td>
                   <td className="px-5 py-3 font-medium text-slate-900">{a.college?.name || "—"}</td>
                   <td className="px-5 py-3 text-slate-700">{a.subject?.name || "—"}</td>
                   <td className="px-5 py-3 text-slate-600 uppercase text-xs">{a.program}</td>
