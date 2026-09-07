@@ -25,6 +25,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        deviceId: { label: "Device ID", type: "text" },
+        deviceName: { label: "Device name", type: "text" },
       },
       async authorize(credentials) {
         try {
@@ -36,7 +38,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           const res = await fetch(`${apiOrigin}/api/auth/admin/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify({
+              email,
+              password,
+              deviceId: credentials?.deviceId || undefined,
+              deviceName: credentials?.deviceName || "Admin panel",
+            }),
           });
           if (!res.ok) return null;
 

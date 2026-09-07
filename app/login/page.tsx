@@ -5,7 +5,7 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Mail, ShieldCheck, Loader2, Lock } from "lucide-react";
 import toast from "react-hot-toast";
-import { reportLoginDevice } from "@/lib/device-id";
+import { reportLoginDevice, getOrCreateDeviceId } from "@/lib/device-id";
 
 function loginErrorMessage(code?: string | null) {
   if (code === "Configuration") {
@@ -40,6 +40,8 @@ export default function AdminLoginPage() {
       const result = await signIn("credentials", {
         email,
         password,
+        deviceId: getOrCreateDeviceId(),
+        deviceName: "Admin panel",
         redirect: false,
       });
 
