@@ -30,6 +30,37 @@ import { mergeTags, normalizeTags } from "@/lib/tags";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import toast from "react-hot-toast";
 
+const DEFAULT_BRANCH_OPTIONS = [
+  "CSE",
+  "CSD",
+  "IT",
+  "AI",
+  "AIML",
+  "AIDS",
+  "ECE",
+  "EEE",
+  "ME",
+  "CE",
+  "Others",
+] as const;
+
+function parseBranchList(value?: string | string[] | null): string[] {
+  if (Array.isArray(value)) {
+    return Array.from(
+      new Set(value.map((item) => String(item || "").trim().toUpperCase()).filter(Boolean)),
+    );
+  }
+  if (!value) return [];
+  return Array.from(
+    new Set(
+      String(value)
+        .split(/[,|/]+/)
+        .map((item) => item.trim().toUpperCase())
+        .filter(Boolean),
+    ),
+  );
+}
+
 interface Subject {
   id: string;
   name: string;
@@ -203,7 +234,7 @@ export function MaterialForm({
         : initialMaterial?.college
           ? [initialMaterial.college]
           : ([] as string[]),
-    branch: initialMaterial?.branch || "",
+    branches: parseBranchList(initialMaterial?.branch),
     section: initialMaterial?.section || "",
     semester: initialMaterial?.semester != null && initialMaterial.semester !== "" ? String(initialMaterial.semester) : "",
     materialCategory: initialMaterial?.materialCategory || "notes",
@@ -486,7 +517,8 @@ export function MaterialForm({
         type: primary?.type || "pdf",
         materialCategory: formData.materialCategory,
         program: formData.program || undefined,
-        branch: formData.branch || undefined,
+        branch: formData.branches.length ? formData.branches.join(",") : undefined,
+        branches: formData.branches.length ? formData.branches : undefined,
         section: formData.section || undefined,
         semester: formData.semester ? parseInt(formData.semester, 10) : undefined,
         subject: formData.subject,
@@ -528,9 +560,27 @@ export function MaterialForm({
 
   const collegePrograms = selectedCollege?.programs || [];
   const collegeBranches = (selectedCollege?.branches || []).filter((b) => b.program === formData.program);
-  const selectedBranch = collegeBranches.find((b) => b.name === formData.branch);
+  const branchOptions = Array.from(
+    new Set([
+      ...DEFAULT_BRANCH_OPTIONS,
+      ...collegeBranches.map((b) => String(b.name || "").trim().toUpperCase()).filter(Boolean),
+    ]),
+  );
+  const selectedBranch = collegeBranches.find((b) =>
+    formData.branches.some((name) => name === String(b.name || "").trim().toUpperCase()),
+  );
   const branchSections = selectedBranch?.sections || [];
   const maxSemesters = collegePrograms.find((p) => p.key === formData.program)?.totalSemesters || 10;
+
+  const toggleBranch = (name: string) => {
+    const code = name.trim().toUpperCase();
+    if (!code) return;
+    setFormData((prev) => {
+      const exists = prev.branches.includes(code);
+      const branches = exists ? prev.branches.filter((b) => b !== code) : [...prev.branches, code];
+      return { ...prev, branches };
+    });
+  };
 
   const previewItem = useMemo(
     () => attachments.find((item) => item.id === previewId) || attachments[0],
@@ -553,7 +603,7 @@ export function MaterialForm({
       chapter: "",
       college: "",
       collegeIds: [],
-      branch: "",
+      branches: [],
       section: "",
       semester: "",
       materialCategory: "notes",
@@ -824,7 +874,6 @@ export function MaterialForm({
                         ...formData,
                         collegeIds: formData.collegeIds.filter((id) => id !== college.id),
                         program: formData.collegeIds.filter((id) => id !== college.id).length ? formData.program : "",
-                        branch: formData.collegeIds.filter((id) => id !== college.id).length ? formData.branch : "",
                         section: "",
                       })
                     }
@@ -871,7 +920,6 @@ export function MaterialForm({
                         ...formData,
                         collegeIds: nextIds,
                         program: nextIds.length ? formData.program || college.programs?.[0]?.key || "" : "",
-                        branch: nextIds.length ? formData.branch : "",
                         section: nextIds.length ? formData.section : "",
                         semester: nextIds.length ? formData.semester : "",
                       });
@@ -908,7 +956,7 @@ export function MaterialForm({
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Program</label>
               <select
                 value={formData.program}
-                onChange={(e) => setFormData({ ...formData, program: e.target.value, branch: "", section: "" })}
+                onChange={(e) => setFormData({ ...formData, program: e.target.value, section: "" })}
                 className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm bg-white"
               >
                 <option value="">Any program</option>
@@ -919,40 +967,36 @@ export function MaterialForm({
                 ))}
               </select>
             </div>
-            {collegeBranches.length > 0 ? (
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Branch</label>
-                <select
-                  value={formData.branch}
-                  onChange={(e) => setFormData({ ...formData, branch: e.target.value, section: "" })}
-                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm bg-white"
-                >
-                  <option value="">All branches</option>
-                  {collegeBranches.map((b, i) => (
-                    <option key={i} value={b.name}>
-                      {b.name}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-[11px] text-slate-400 mt-1">Choose from this college’s branches.</p>
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                Branches <span className="text-slate-400 font-normal">(select one or more)</span>
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {branchOptions.map((code) => {
+                  const active = formData.branches.includes(code);
+                  return (
+                    <button
+                      key={code}
+                      type="button"
+                      onClick={() => toggleBranch(code)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
+                        active
+                          ? "bg-violet-600 text-white border-violet-600"
+                          : "bg-white text-slate-600 border-slate-200 hover:border-violet-300 hover:text-violet-700"
+                      }`}
+                    >
+                      {code}
+                    </button>
+                  );
+                })}
               </div>
-            ) : (
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Branch</label>
-                <input
-                  type="text"
-                  value={formData.branch}
-                  onChange={(e) => setFormData({ ...formData, branch: e.target.value.toUpperCase() })}
-                  placeholder="e.g. CSE"
-                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm bg-white uppercase"
-                />
-                <p className="text-[11px] text-slate-400 mt-1">
-                  {formData.collegeIds.length
-                    ? "This college has no branch list yet, so type the branch."
-                    : "Type a branch code, or pick a college to choose from a list."}
-                </p>
-              </div>
-            )}
+              <p className="text-[11px] text-slate-400 mt-1.5">
+                Same notes can apply to CSE, AI, CSD, AIML, etc. College is optional — pick branches anytime.
+                {formData.branches.length
+                  ? ` Selected: ${formData.branches.join(", ")}.`
+                  : " Leave empty for all branches."}
+              </p>
+            </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Semester</label>
               <select
