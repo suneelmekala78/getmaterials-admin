@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BookOpen, Plus, Edit, Trash2, X, Save, Loader2 } from "lucide-react";
+import { BookOpen, Plus, Edit, Trash2, X, Save, Loader2, ImagePlus } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { uploadBrowserFile } from "@/lib/upload-file";
 import toast from "react-hot-toast";
 
 interface SubjectItem {
@@ -13,6 +14,7 @@ interface SubjectItem {
   category: string;
   isActive: boolean;
   materialsCount: number;
+  icon?: string;
 }
 
 const categories = [
@@ -29,13 +31,23 @@ export default function SubjectsAdminPage() {
   const [subjects, setSubjects] = useState<SubjectItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [editId, setEditId] = useState<string | null>(null);
-  const [editData, setEditData] = useState({ name: "", description: "", category: "general", isActive: true });
+  const [editData, setEditData] = useState({
+    name: "",
+    description: "",
+    category: "general",
+    isActive: true,
+  });
+  const [editIconFile, setEditIconFile] = useState<File | null>(null);
+  const [editIconPreview, setEditIconPreview] = useState("");
+  const [clearIcon, setClearIcon] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   const [showNew, setShowNew] = useState(false);
   const [newData, setNewData] = useState({ name: "", description: "", category: "general" });
+  const [newIconFile, setNewIconFile] = useState<File | null>(null);
+  const [newIconPreview, setNewIconPreview] = useState("");
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
@@ -62,29 +74,66 @@ export default function SubjectsAdminPage() {
       category: subject.category,
       isActive: subject.isActive,
     });
+    setEditIconFile(null);
+    setEditIconPreview(subject.icon || "");
+    setClearIcon(false);
+  };
+
+  const cancelEdit = () => {
+    setEditId(null);
+    setEditIconFile(null);
+    setEditIconPreview("");
+    setClearIcon(false);
+  };
+
+  const pickIcon = (kind: "new" | "edit", file?: File) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file");
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    if (kind === "new") {
+      setNewIconFile(file);
+      setNewIconPreview(url);
+    } else {
+      setEditIconFile(file);
+      setEditIconPreview(url);
+      setClearIcon(false);
+    }
   };
 
   const handleSave = async () => {
     if (!editId) return;
     setSaving(true);
     try {
+      let iconUrl: string | undefined;
+      if (editIconFile) {
+        const uploaded = await uploadBrowserFile(editIconFile, "subject-icons");
+        iconUrl = uploaded.fileUrl;
+      }
+
       const res = await fetch(`/api/subjects/${editId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editData),
+        body: JSON.stringify({
+          ...editData,
+          ...(iconUrl ? { icon: iconUrl } : {}),
+          ...(clearIcon ? { clearIcon: true } : {}),
+        }),
       });
       const data = await res.json();
       if (res.ok) {
         setSubjects((prev) =>
           prev.map((s) => (s._id === editId ? { ...s, ...data.subject } : s))
         );
-        setEditId(null);
+        cancelEdit();
         toast.success("Subject updated");
       } else {
         toast.error(data.error || "Failed to update subject");
       }
-    } catch {
-      toast.error("Something went wrong");
+    } catch (err: any) {
+      toast.error(err?.message || "Something went wrong");
     } finally {
       setSaving(false);
     }
@@ -116,22 +165,33 @@ export default function SubjectsAdminPage() {
     e.preventDefault();
     setCreating(true);
     try {
+      let iconUrl: string | undefined;
+      if (newIconFile) {
+        const uploaded = await uploadBrowserFile(newIconFile, "subject-icons");
+        iconUrl = uploaded.fileUrl;
+      }
+
       const res = await fetch("/api/subjects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newData),
+        body: JSON.stringify({
+          ...newData,
+          ...(iconUrl ? { icon: iconUrl } : {}),
+        }),
       });
       const data = await res.json();
       if (res.ok) {
         setSubjects((prev) => [...prev, data.subject]);
         setShowNew(false);
         setNewData({ name: "", description: "", category: "general" });
+        setNewIconFile(null);
+        setNewIconPreview("");
         toast.success("Subject created");
       } else {
         toast.error(data.error || "Failed to create subject");
       }
-    } catch {
-      toast.error("Something went wrong");
+    } catch (err: any) {
+      toast.error(err?.message || "Something went wrong");
     } finally {
       setCreating(false);
     }
@@ -151,7 +211,7 @@ export default function SubjectsAdminPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Subjects</h1>
           <p className="text-slate-500 mt-1">
-            Manage subjects and their categories
+            Manage subjects, categories, and logo images
           </p>
         </div>
         <button
@@ -164,7 +224,7 @@ export default function SubjectsAdminPage() {
 
       {showNew && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 space-y-4">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-slate-900">Add Subject</h2>
               <button onClick={() => setShowNew(false)} className="p-1 text-slate-400 hover:text-slate-600">
@@ -205,6 +265,31 @@ export default function SubjectsAdminPage() {
                   ))}
                 </select>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Logo / icon</label>
+                <label className="flex items-center gap-3 rounded-xl border border-dashed border-slate-200 px-4 py-3 cursor-pointer hover:border-violet-300 hover:bg-violet-50/40 transition-colors">
+                  <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 overflow-hidden flex items-center justify-center shrink-0">
+                    {newIconPreview ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={newIconPreview} alt="" className="w-full h-full object-contain bg-white" />
+                    ) : (
+                      <ImagePlus className="w-5 h-5 text-slate-400" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-slate-700">Upload subject logo</p>
+                    <p className="text-xs text-slate-400 truncate">
+                      {newIconFile?.name || "PNG, JPG, or WebP"}
+                    </p>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => pickIcon("new", e.target.files?.[0])}
+                  />
+                </label>
+              </div>
               <div className="flex justify-end gap-3">
                 <button type="button" onClick={() => setShowNew(false)} className="px-4 py-2 text-sm text-slate-600 hover:text-slate-800">
                   Cancel
@@ -233,20 +318,69 @@ export default function SubjectsAdminPage() {
             </thead>
             <tbody className="divide-y divide-slate-50">
               {subjects.map((subject, index) => (
-                <tr key={subject._id} className="hover:bg-slate-50/50">
+                <tr key={subject._id} className="hover:bg-slate-50/50 align-top">
                   <td className="px-6 py-4 text-xs text-slate-400 tabular-nums">{index + 1}</td>
                   <td className="px-6 py-4">
                     {editId === subject._id ? (
-                      <input
-                        type="text"
-                        value={editData.name}
-                        onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                        className="w-full px-3 py-1.5 border border-violet-300 rounded-lg text-sm focus:outline-none focus:border-violet-500"
-                      />
+                      <div className="space-y-3 min-w-[240px]">
+                        <input
+                          type="text"
+                          value={editData.name}
+                          onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                          className="w-full px-3 py-1.5 border border-violet-300 rounded-lg text-sm focus:outline-none focus:border-violet-500"
+                        />
+                        <textarea
+                          value={editData.description}
+                          onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+                          rows={2}
+                          placeholder="Description"
+                          className="w-full px-3 py-1.5 border border-violet-300 rounded-lg text-sm focus:outline-none focus:border-violet-500 resize-none"
+                        />
+                        <label className="flex items-center gap-3 rounded-xl border border-dashed border-violet-200 px-3 py-2 cursor-pointer hover:bg-violet-50/50">
+                          <div className="w-10 h-10 rounded-lg bg-white border border-slate-100 overflow-hidden flex items-center justify-center shrink-0">
+                            {editIconPreview && !clearIcon ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={editIconPreview} alt="" className="w-full h-full object-contain" />
+                            ) : (
+                              <ImagePlus className="w-4 h-4 text-slate-400" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-medium text-slate-700">Update logo</p>
+                            <p className="text-[11px] text-slate-400 truncate">
+                              {editIconFile?.name || "Choose image"}
+                            </p>
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => pickIcon("edit", e.target.files?.[0])}
+                          />
+                        </label>
+                        {editIconPreview && !clearIcon ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setClearIcon(true);
+                              setEditIconFile(null);
+                              setEditIconPreview("");
+                            }}
+                            className="text-xs text-red-600 hover:underline"
+                          >
+                            Remove logo
+                          </button>
+                        ) : null}
+                      </div>
                     ) : (
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-violet-50 flex items-center justify-center">
-                          <BookOpen className="w-4 h-4 text-violet-600" />
+                        <div className="w-9 h-9 rounded-lg bg-violet-50 border border-violet-100 overflow-hidden flex items-center justify-center shrink-0">
+                          {subject.icon ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={subject.icon} alt="" className="w-full h-full object-contain bg-white" />
+                          ) : (
+                            <BookOpen className="w-4 h-4 text-violet-600" />
+                          )}
                         </div>
                         <div>
                           <p className="font-medium text-slate-900">{subject.name}</p>
@@ -309,7 +443,7 @@ export default function SubjectsAdminPage() {
                             <Save className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => setEditId(null)}
+                            onClick={cancelEdit}
                             className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
                             title="Cancel"
                           >

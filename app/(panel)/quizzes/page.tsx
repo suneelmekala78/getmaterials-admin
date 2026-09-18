@@ -10,6 +10,9 @@ interface Quiz {
   _id: string;
   title: string;
   description?: string;
+  slug?: string;
+  kind?: "subject" | "general_knowledge" | "other";
+  thumbnailUrl?: string;
   subject?: { _id: string; name: string };
   chapter?: { _id: string; title: string };
   questions: any[];
@@ -18,6 +21,18 @@ interface Quiz {
   attempts: number;
   isActive: boolean;
   createdAt: string;
+}
+
+function kindLabel(kind?: Quiz["kind"]) {
+  if (kind === "general_knowledge") return "GK";
+  if (kind === "other") return "Other";
+  return "Subject";
+}
+
+function kindBadgeClass(kind?: Quiz["kind"]) {
+  if (kind === "general_knowledge") return "bg-amber-50 text-amber-700";
+  if (kind === "other") return "bg-slate-100 text-slate-600";
+  return "bg-violet-50 text-violet-700";
 }
 
 interface Attempt {
@@ -146,6 +161,7 @@ export default function QuizzesPage() {
               <tr>
                 <th className="text-left px-6 py-3 font-semibold text-slate-600 w-12">#</th>
                 <th className="text-left px-6 py-3 font-semibold text-slate-600">Title</th>
+                <th className="text-left px-6 py-3 font-semibold text-slate-600">Kind</th>
                 <th className="text-left px-6 py-3 font-semibold text-slate-600">Subject</th>
                 <th className="text-left px-6 py-3 font-semibold text-slate-600">Questions</th>
                 <th className="text-left px-6 py-3 font-semibold text-slate-600">Attempts</th>
@@ -158,12 +174,43 @@ export default function QuizzesPage() {
                 <tr key={quiz._id} className="hover:bg-slate-50">
                   <td className="px-6 py-4 text-xs text-slate-400 tabular-nums">{index + 1}</td>
                   <td className="px-6 py-4">
-                    <p className="font-medium text-slate-900">{quiz.title}</p>
-                    {quiz.chapter && (
-                      <p className="text-xs text-slate-400 mt-0.5">{quiz.chapter.title}</p>
-                    )}
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-7 rounded overflow-hidden border border-slate-100 bg-slate-100 shrink-0">
+                        {quiz.thumbnailUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={quiz.thumbnailUrl}
+                            alt=""
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-slate-200" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-medium text-slate-900">{quiz.title}</p>
+                        {quiz.slug ? (
+                          <p className="text-xs text-slate-400 font-mono mt-0.5 truncate">
+                            /quizzes/{quiz.slug}
+                          </p>
+                        ) : quiz.chapter ? (
+                          <p className="text-xs text-slate-400 mt-0.5">{quiz.chapter.title}</p>
+                        ) : null}
+                      </div>
+                    </div>
                   </td>
-                  <td className="px-6 py-4 text-slate-600">{quiz.subject?.name || "—"}</td>
+                  <td className="px-6 py-4">
+                    <span
+                      className={`px-2 py-0.5 text-xs font-medium rounded ${kindBadgeClass(quiz.kind)}`}
+                    >
+                      {kindLabel(quiz.kind)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-slate-600">
+                    {quiz.kind === "subject" || !quiz.kind
+                      ? quiz.subject?.name || "—"
+                      : "—"}
+                  </td>
                   <td className="px-6 py-4 text-slate-600">{quiz.questions?.length || 0}</td>
                   <td className="px-6 py-4 text-slate-600">{quiz.attempts || 0}</td>
                   <td className="px-6 py-4">

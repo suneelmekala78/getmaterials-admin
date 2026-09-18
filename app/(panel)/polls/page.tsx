@@ -1,16 +1,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { HiOutlinePlus, HiOutlineTrash, HiOutlineEye } from "react-icons/hi";
+import { HiOutlinePlus, HiOutlineTrash, HiOutlineEye, HiOutlinePencil } from "react-icons/hi";
+import { BarChart3 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import ThumbnailPicker from "@/components/ThumbnailPicker";
 import toast from "react-hot-toast";
 
 interface Poll {
   _id: string;
   question: string;
+  slug?: string;
   description?: string;
   type: "rating" | "yes_no" | "multiple_choice" | "text";
   options?: string[];
+  thumbnailUrl?: string;
   responseCount: number;
   isActive: boolean;
   createdAt: string;
@@ -33,20 +37,31 @@ const typeLabels = {
   text: "Open Text",
 };
 
+function emptyForm() {
+  return {
+    question: "",
+    description: "",
+    type: "yes_no" as Poll["type"],
+    options: ["", ""],
+    thumbnailUrl: "",
+  };
+}
+
 export default function PollsPage() {
   const [polls, setPolls] = useState<Poll[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
+  const [editPoll, setEditPoll] = useState<Poll | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [viewPoll, setViewPoll] = useState<PollWithResponses | null>(null);
   const [viewLoading, setViewLoading] = useState(false);
 
-  // Create form
   const [question, setQuestion] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState<Poll["type"]>("yes_no");
   const [options, setOptions] = useState(["", ""]);
-  const [creating, setCreating] = useState(false);
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -63,6 +78,43 @@ export default function PollsPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const resetForm = () => {
+    const form = emptyForm();
+    setQuestion(form.question);
+    setDescription(form.description);
+    setType(form.type);
+    setOptions(form.options);
+    setThumbnailUrl(form.thumbnailUrl);
+    setError("");
+  };
+
+  const openCreate = () => {
+    resetForm();
+    setEditPoll(null);
+    setShowCreate(true);
+  };
+
+  const openEdit = (poll: Poll) => {
+    setQuestion(poll.question || "");
+    setDescription(poll.description || "");
+    setType(poll.type);
+    setOptions(
+      poll.type === "multiple_choice" && poll.options?.length
+        ? [...poll.options]
+        : ["", ""]
+    );
+    setThumbnailUrl(poll.thumbnailUrl || "");
+    setError("");
+    setEditPoll(poll);
+    setShowCreate(false);
+  };
+
+  const closeForm = () => {
+    setShowCreate(false);
+    setEditPoll(null);
+    resetForm();
   };
 
   const viewResponses = async (pollId: string) => {
@@ -82,38 +134,38 @@ export default function PollsPage() {
     }
   };
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setCreating(true);
+    setSaving(true);
+
+    const payload = {
+      question,
+      description,
+      type,
+      thumbnailUrl: thumbnailUrl || undefined,
+      options: type === "multiple_choice" ? options.filter((o) => o.trim()) : undefined,
+    };
 
     try {
-      const res = await fetch("/api/polls", {
-        method: "POST",
+      const res = await fetch(editPoll ? `/api/polls/${editPoll._id}` : "/api/polls", {
+        method: editPoll ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          question,
-          description,
-          type,
-          options: type === "multiple_choice" ? options.filter((o) => o.trim()) : undefined,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Failed to create poll");
+        setError(data.error || (editPoll ? "Failed to update poll" : "Failed to create poll"));
       } else {
-        setShowCreate(false);
-        setQuestion("");
-        setDescription("");
-        setType("yes_no");
-        setOptions(["", ""]);
+        closeForm();
         fetchPolls();
+        toast.success(editPoll ? "Poll updated" : "Poll created");
       }
     } catch {
       setError("Something went wrong");
     } finally {
-      setCreating(false);
+      setSaving(false);
     }
   };
 
@@ -149,6 +201,8 @@ export default function PollsPage() {
     }
   };
 
+  const formOpen = showCreate || !!editPoll;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -167,7 +221,7 @@ export default function PollsPage() {
           </p>
         </div>
         <button
-          onClick={() => setShowCreate(true)}
+          onClick={openCreate}
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-violet-600 text-white text-sm font-semibold rounded-xl hover:bg-violet-700 transition-colors"
         >
           <HiOutlinePlus className="text-lg" />
@@ -175,13 +229,14 @@ export default function PollsPage() {
         </button>
       </div>
 
-      {/* Create Modal */}
-      {showCreate && (
+      {formOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg p-6 space-y-4">
-            <h2 className="text-lg font-bold text-slate-900">Create Poll</h2>
+          <div className="bg-white rounded-2xl w-full max-w-lg p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <h2 className="text-lg font-bold text-slate-900">
+              {editPoll ? "Edit Poll" : "Create Poll"}
+            </h2>
 
-            <form onSubmit={handleCreate} className="space-y-4">
+            <form onSubmit={handleSave} className="space-y-4">
               {error && (
                 <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg">
                   {error}
@@ -189,7 +244,9 @@ export default function PollsPage() {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Question</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Question <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   value={question}
@@ -201,7 +258,9 @@ export default function PollsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Description (optional)</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Description (optional)
+                </label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -212,7 +271,9 @@ export default function PollsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Response Type</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Response Type <span className="text-red-500">*</span>
+                </label>
                 <select
                   value={type}
                   onChange={(e) => setType(e.target.value as Poll["type"])}
@@ -225,9 +286,22 @@ export default function PollsPage() {
                 </select>
               </div>
 
+              <ThumbnailPicker value={thumbnailUrl} onChange={setThumbnailUrl} />
+
+              {editPoll?.slug ? (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Public URL</label>
+                  <p className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-2.5 font-mono text-xs text-slate-500">
+                    /polls/{editPoll.slug}
+                  </p>
+                </div>
+              ) : null}
+
               {type === "multiple_choice" && (
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-slate-700">Options</label>
+                  <label className="block text-sm font-medium text-slate-700">
+                    Options <span className="text-red-500">*</span>
+                  </label>
                   {options.map((opt, idx) => (
                     <div key={idx} className="flex items-center gap-2">
                       <input
@@ -265,17 +339,17 @@ export default function PollsPage() {
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setShowCreate(false)}
+                  onClick={closeForm}
                   className="flex-1 py-2.5 border border-slate-200 text-slate-600 font-medium text-sm rounded-xl hover:bg-slate-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={creating}
+                  disabled={saving}
                   className="flex-1 py-2.5 bg-violet-600 text-white font-medium text-sm rounded-xl hover:bg-violet-700 disabled:opacity-50"
                 >
-                  {creating ? "Creating..." : "Create Poll"}
+                  {saving ? "Saving..." : editPoll ? "Save Changes" : "Create Poll"}
                 </button>
               </div>
             </form>
@@ -283,7 +357,6 @@ export default function PollsPage() {
         </div>
       )}
 
-      {/* Polls List */}
       {polls.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-2xl border border-slate-100">
           <p className="text-slate-500">No polls yet. Create your first poll to get user feedback!</p>
@@ -292,22 +365,41 @@ export default function PollsPage() {
         <div className="grid gap-4">
           {polls.map((poll) => (
             <div key={poll._id} className="bg-white rounded-xl border border-slate-100 p-5">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-slate-900">{poll.question}</h3>
-                  {poll.description && (
-                    <p className="text-sm text-slate-500 mt-0.5">{poll.description}</p>
-                  )}
-                  <div className="flex items-center gap-3 mt-2">
-                    <span className="px-2 py-0.5 text-xs font-medium bg-slate-100 text-slate-600 rounded">
-                      {typeLabels[poll.type]}
-                    </span>
-                    <span className="text-xs text-slate-400">
-                      {poll.responseCount} responses
-                    </span>
-                    <span className="text-xs text-slate-400">
-                      {new Date(poll.createdAt).toLocaleDateString()}
-                    </span>
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3 flex-1 min-w-0">
+                  <div className="w-20 h-14 rounded-lg overflow-hidden border border-slate-100 bg-slate-100 shrink-0">
+                    {poll.thumbnailUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={poll.thumbnailUrl}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400">
+                        <BarChart3 className="w-5 h-5" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-slate-900">{poll.question}</h3>
+                    {poll.slug ? (
+                      <p className="text-xs text-slate-400 font-mono mt-0.5 truncate">
+                        /polls/{poll.slug}
+                      </p>
+                    ) : null}
+                    {poll.description && (
+                      <p className="text-sm text-slate-500 mt-0.5">{poll.description}</p>
+                    )}
+                    <div className="flex items-center gap-3 mt-2">
+                      <span className="px-2 py-0.5 text-xs font-medium bg-slate-100 text-slate-600 rounded">
+                        {typeLabels[poll.type]}
+                      </span>
+                      <span className="text-xs text-slate-400">{poll.responseCount} responses</span>
+                      <span className="text-xs text-slate-400">
+                        {new Date(poll.createdAt).toLocaleString("en-IN")}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -315,8 +407,16 @@ export default function PollsPage() {
                     onClick={() => viewResponses(poll._id)}
                     className="p-2 text-slate-400 hover:text-violet-600 rounded-lg hover:bg-violet-50"
                     title="View Responses"
+                    disabled={viewLoading}
                   >
                     <HiOutlineEye className="text-lg" />
+                  </button>
+                  <button
+                    onClick={() => openEdit(poll)}
+                    className="p-2 text-slate-400 hover:text-violet-600 rounded-lg hover:bg-violet-50"
+                    title="Edit Poll"
+                  >
+                    <HiOutlinePencil className="text-lg" />
                   </button>
                   <button
                     onClick={() => toggleActive(poll._id, poll.isActive)}
@@ -341,7 +441,6 @@ export default function PollsPage() {
         </div>
       )}
 
-      {/* View Responses Modal */}
       {viewPoll && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
@@ -384,17 +483,29 @@ export default function PollsPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-slate-900">{resp.user?.name || "Unknown"}</span>
-                          <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded capitalize ${
-                            resp.user?.role === "teacher" ? "bg-violet-50 text-violet-700" : "bg-blue-50 text-blue-700"
-                          }`}>
+                          <span className="text-sm font-medium text-slate-900">
+                            {resp.user?.name || "Unknown"}
+                          </span>
+                          <span
+                            className={`px-1.5 py-0.5 text-[10px] font-medium rounded capitalize ${
+                              resp.user?.role === "teacher"
+                                ? "bg-violet-50 text-violet-700"
+                                : "bg-blue-50 text-blue-700"
+                            }`}
+                          >
                             {resp.user?.role || "user"}
                           </span>
                         </div>
                         <p className="text-xs text-slate-400">{resp.user?.email}</p>
                         <p className="text-sm text-slate-700 mt-1 font-medium">{resp.answer}</p>
                         <p className="text-[10px] text-slate-400 mt-1">
-                          {new Date(resp.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                          {new Date(resp.createdAt).toLocaleDateString("en-IN", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </p>
                       </div>
                     </div>

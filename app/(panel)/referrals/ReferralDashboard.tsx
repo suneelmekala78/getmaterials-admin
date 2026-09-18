@@ -34,6 +34,15 @@ interface ReferralData {
     referrer: string;
     referralCode: string;
     landingPage: string;
+    platform?: string;
+    signupMeta?: {
+      platform?: string;
+      device?: string;
+      ip?: string;
+      country?: string;
+      city?: string;
+      userAgent?: string;
+    };
     createdAt: string;
   }[];
   dailySignups: { date: string; count: number }[];
@@ -53,6 +62,19 @@ function formatDisplayDate(value: string | Date) {
     day: "numeric",
     month: "short",
     year: "numeric",
+  });
+}
+
+/** Signup / referral timestamps with time. */
+function formatDisplayDateTime(value: string | Date) {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value || "—");
+  return d.toLocaleString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
@@ -371,20 +393,27 @@ export function ReferralDashboard({ data }: Props) {
                 <th className="text-left py-2 px-3 font-semibold text-slate-600">User</th>
                 <th className="text-left py-2 px-3 font-semibold text-slate-600">Source</th>
                 <th className="text-left py-2 px-3 font-semibold text-slate-600">Referrer</th>
+                <th className="text-left py-2 px-3 font-semibold text-slate-600">Platform</th>
                 <th className="text-left py-2 px-3 font-semibold text-slate-600">Campaign</th>
                 <th className="text-left py-2 px-3 font-semibold text-slate-600">Landing Page</th>
-                <th className="text-left py-2 px-3 font-semibold text-slate-600">Date</th>
+                <th className="text-left py-2 px-3 font-semibold text-slate-600">Signed up</th>
               </tr>
             </thead>
             <tbody>
               {recentReferrals.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-8 text-slate-400">
+                  <td colSpan={8} className="text-center py-8 text-slate-400">
                     No referral data yet. Share your referral links to start tracking!
                   </td>
                 </tr>
               ) : (
-                recentReferrals.map((r, index) => (
+                recentReferrals.map((r, index) => {
+                  const platform =
+                    r.platform || r.signupMeta?.platform || "";
+                  const loc = [r.signupMeta?.city, r.signupMeta?.country]
+                    .filter(Boolean)
+                    .join(", ");
+                  return (
                   <tr key={r.id} className="border-b border-slate-50 hover:bg-slate-50">
                     <td className="py-2.5 px-3 text-xs text-slate-400 tabular-nums">
                       {index + 1}
@@ -414,15 +443,25 @@ export function ReferralDashboard({ data }: Props) {
                         {r.referrer || "—"}
                       </span>
                     </td>
+                    <td className="py-2.5 px-3 text-xs text-slate-600">
+                      <p className="capitalize">
+                        {[platform, r.signupMeta?.device].filter(Boolean).join(" · ") ||
+                          "—"}
+                      </p>
+                      {loc ? (
+                        <p className="text-slate-400 truncate max-w-[120px]">{loc}</p>
+                      ) : null}
+                    </td>
                     <td className="py-2.5 px-3 text-slate-600">{r.campaign || "—"}</td>
                     <td className="py-2.5 px-3 text-slate-400 text-xs max-w-[120px] truncate">
                       {r.landingPage}
                     </td>
                     <td className="py-2.5 px-3 text-xs text-slate-500 whitespace-nowrap">
-                      {formatDisplayDate(r.createdAt)}
+                      {formatDisplayDateTime(r.createdAt)}
                     </td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>

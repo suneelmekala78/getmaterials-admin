@@ -25,6 +25,7 @@ import {
   HiOutlineBell,
   HiOutlineTrash,
   HiOutlineShieldCheck,
+  HiOutlineBriefcase,
 } from "react-icons/hi";
 
 const links = [
@@ -36,6 +37,7 @@ const links = [
   { name: "College Assigns", href: "/college-assignments", icon: HiOutlineClipboardList },
   { name: "Quizzes", href: "/quizzes", icon: HiOutlinePuzzle },
   { name: "Polls", href: "/polls", icon: HiOutlineSpeakerphone },
+  { name: "Jobs", href: "/jobs", icon: HiOutlineBriefcase },
   { name: "Notifications", href: "/notifications", icon: HiOutlineBell },
   { name: "Reviews", href: "/reviews", icon: HiOutlineStar },
   { name: "Teachers", href: "/teachers", icon: HiOutlineUserGroup },

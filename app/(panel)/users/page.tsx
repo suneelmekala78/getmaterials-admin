@@ -14,6 +14,30 @@ interface UserItem {
   role: string;
   status: string;
   createdAt: string;
+  signupMeta?: {
+    platform?: string;
+    device?: string;
+    ip?: string;
+    country?: string;
+    city?: string;
+    region?: string;
+    userAgent?: string;
+  };
+}
+
+function formatJoined(value: string) {
+  return new Date(value).toLocaleString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function formatLocation(meta?: UserItem["signupMeta"]) {
+  if (!meta) return "";
+  return [meta.city, meta.region, meta.country].filter(Boolean).join(", ");
 }
 
 export default function AdminUsersPage() {
@@ -163,6 +187,7 @@ export default function AdminUsersPage() {
                 <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Role</th>
                 <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
                 <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Joined</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Signup</th>
                 <th className="px-5 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -196,12 +221,31 @@ export default function AdminUsersPage() {
                       {user.status}
                     </span>
                   </td>
+                  <td className="px-5 py-4 text-xs text-slate-500 whitespace-nowrap">
+                    {formatJoined(user.createdAt)}
+                  </td>
                   <td className="px-5 py-4 text-xs text-slate-500">
-                    {new Date(user.createdAt).toLocaleDateString("en-GB", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
+                    {user.signupMeta ? (
+                      <div className="space-y-0.5 max-w-[180px]">
+                        <p className="capitalize">
+                          {[user.signupMeta.platform, user.signupMeta.device]
+                            .filter(Boolean)
+                            .join(" · ") || "—"}
+                        </p>
+                        {formatLocation(user.signupMeta) ? (
+                          <p className="text-slate-400 truncate">
+                            {formatLocation(user.signupMeta)}
+                          </p>
+                        ) : null}
+                        {user.signupMeta.ip ? (
+                          <p className="text-slate-400 font-mono text-[10px]">
+                            {user.signupMeta.ip}
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <span className="text-slate-300">—</span>
+                    )}
                   </td>
                   <td className="px-5 py-4 text-right">
                     <div className="flex items-center justify-end gap-1">

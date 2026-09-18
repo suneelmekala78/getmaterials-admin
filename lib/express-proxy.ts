@@ -48,11 +48,12 @@ export async function signAdminAccessToken(user: AdminSessionUser) {
 async function authorizationHeader() {
   try {
     const session = (await auth()) as AdminSession | null;
-    if (session?.accessToken) {
-      return `Bearer ${session.accessToken}`;
-    }
     const user = session?.user;
     if (!user?.email) return null;
+
+    // Prefer a freshly signed short-lived API token from the Auth.js session.
+    // Stale accessTokens from login (stored in the JWT cookie) often expire while
+    // the admin session itself is still valid, which caused false "Unauthorized" banners.
     return `Bearer ${await signAdminAccessToken(user)}`;
   } catch {
     return null;
