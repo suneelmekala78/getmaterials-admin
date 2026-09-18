@@ -375,12 +375,12 @@ export default function SubjectsAdminPage() {
                     ) : (
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-lg bg-violet-50 border border-violet-100 overflow-hidden flex items-center justify-center shrink-0">
-                          {subject.icon ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={subject.icon} alt="" className="w-full h-full object-contain bg-white" />
-                          ) : (
-                            <BookOpen className="w-4 h-4 text-violet-600" />
-                          )}
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={subject.icon || "/images/default-subject.png"}
+                            alt=""
+                            className="w-full h-full object-contain bg-white"
+                          />
                         </div>
                         <div>
                           <p className="font-medium text-slate-900">{subject.name}</p>

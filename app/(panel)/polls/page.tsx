@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { HiOutlinePlus, HiOutlineTrash, HiOutlineEye, HiOutlinePencil } from "react-icons/hi";
-import { BarChart3 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import ThumbnailPicker from "@/components/ThumbnailPicker";
 import toast from "react-hot-toast";
@@ -368,18 +367,12 @@ export default function PollsPage() {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3 flex-1 min-w-0">
                   <div className="w-20 h-14 rounded-lg overflow-hidden border border-slate-100 bg-slate-100 shrink-0">
-                    {poll.thumbnailUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={poll.thumbnailUrl}
-                        alt=""
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400">
-                        <BarChart3 className="w-5 h-5" />
-                      </div>
-                    )}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={poll.thumbnailUrl || "/images/default-poll.png"}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-slate-900">{poll.question}</h3>

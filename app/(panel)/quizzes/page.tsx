@@ -176,16 +176,12 @@ export default function QuizzesPage() {
                   <td className="px-6 py-4">
                     <div className="flex items-start gap-3">
                       <div className="w-10 h-7 rounded overflow-hidden border border-slate-100 bg-slate-100 shrink-0">
-                        {quiz.thumbnailUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={quiz.thumbnailUrl}
-                            alt=""
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-slate-200" />
-                        )}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={quiz.thumbnailUrl || "/images/default-quiz.png"}
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                       <div className="min-w-0">
                         <p className="font-medium text-slate-900">{quiz.title}</p>

@@ -1,10 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Globe, Bell, Shield, Save } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { Globe, Bell, Shield, Save, User } from "lucide-react";
 import toast from "react-hot-toast";
+import { UserAvatar } from "@/components/UserAvatar";
 
 export default function AdminSettingsPage() {
+  const { data: session } = useSession();
+  const sessionUser = session?.user as
+    | { name?: string; email?: string; image?: string; role?: string }
+    | undefined;
+
   const [settings, setSettings] = useState({
     platformName: "GetMaterials",
     supportEmail: "getmaterials.in@gmail.com",
@@ -51,11 +58,41 @@ export default function AdminSettingsPage() {
       setTimeout(() => setMessage(""), 3000);
     }
   };
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
         <p className="text-slate-500 mt-1">Platform configuration and preferences.</p>
+      </div>
+
+      {/* Your account */}
+      <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+          <User className="w-5 h-5 text-slate-400" />
+          <h2 className="text-base font-semibold text-slate-900">Your account</h2>
+        </div>
+        <div className="p-6">
+          <div className="flex items-center gap-4">
+            <UserAvatar
+              name={sessionUser?.name || "Admin"}
+              image={sessionUser?.image}
+              role={sessionUser?.role || "admin"}
+              size={56}
+            />
+            <div className="min-w-0">
+              <p className="text-base font-semibold text-slate-900 truncate">
+                {sessionUser?.name || "Admin"}
+              </p>
+              <p className="text-sm text-slate-500 truncate">
+                {sessionUser?.email || "—"}
+              </p>
+              <span className="mt-1.5 inline-flex px-2 py-0.5 text-[11px] font-semibold rounded-lg bg-violet-50 text-violet-700 capitalize">
+                {sessionUser?.role || "admin"}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* General Settings */}
