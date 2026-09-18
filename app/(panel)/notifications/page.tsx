@@ -1,18 +1,35 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   HiOutlineBell,
   HiOutlinePaperAirplane,
   HiOutlineTrash,
   HiOutlineUsers,
   HiOutlineDeviceMobile,
+  HiOutlineMail,
+  HiOutlineTemplate,
 } from "react-icons/hi";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import toast from "react-hot-toast";
 
-type Audience = "all" | "students" | "teachers" | "admins" | "college" | "user";
-type NotificationType = "announcement" | "material" | "quiz" | "reminder" | "update";
+type Audience =
+  | "all"
+  | "students"
+  | "teachers"
+  | "admins"
+  | "college"
+  | "user"
+  | "users"
+  | "incomplete_profile"
+  | "no_uploads";
+
+type NotificationType =
+  | "announcement"
+  | "material"
+  | "quiz"
+  | "reminder"
+  | "update";
 
 interface SentNotification {
   id: string;
@@ -23,11 +40,15 @@ interface SentNotification {
   audience: Audience;
   college: string | null;
   targetUser: { name: string; email: string } | null;
+  targetUsersCount?: number;
+  channels?: { push: boolean; email: boolean };
   createdBy: string | null;
   recipientCount: number;
   readCount: number;
   pushSent: number;
   pushFailed: number;
+  emailSent?: number;
+  emailFailed?: number;
   createdAt: string;
 }
 
@@ -36,13 +57,28 @@ interface AudienceStat {
   devices: number;
 }
 
+interface NotifTemplate {
+  id: string;
+  label: string;
+  title: string;
+  body: string;
+  type: NotificationType;
+  link: string;
+  audience: Audience;
+  sendPush: boolean;
+  sendEmail: boolean;
+}
+
 const audienceOptions: { value: Audience; label: string }[] = [
   { value: "all", label: "Everyone" },
-  { value: "students", label: "Students only" },
-  { value: "teachers", label: "Teachers only" },
-  { value: "admins", label: "Admins only" },
-  { value: "college", label: "A specific college" },
-  { value: "user", label: "A specific user" },
+  { value: "students", label: "Students" },
+  { value: "teachers", label: "Teachers" },
+  { value: "admins", label: "Admins" },
+  { value: "college", label: "College" },
+  { value: "user", label: "Single user" },
+  { value: "users", label: "Selected users" },
+  { value: "incomplete_profile", label: "Incomplete profiles" },
+  { value: "no_uploads", label: "Users with no uploads" },
 ];
 
 const typeOptions: { value: NotificationType; label: string }[] = [
@@ -60,14 +96,116 @@ const audienceLabels: Record<Audience, string> = {
   admins: "Admins",
   college: "College",
   user: "Single user",
+  users: "Selected users",
+  incomplete_profile: "Incomplete profiles",
+  no_uploads: "No uploads",
 };
+
+const deepLinkPresets: { id: string; path: string; label: string }[] = [
+  { id: "home", path: "/", label: "Home" },
+  { id: "subjects", path: "/subjects", label: "Subjects" },
+  { id: "categories", path: "/categories", label: "Categories (mobile)" },
+  { id: "materials", path: "/materials", label: "Materials" },
+  { id: "quizzes", path: "/quizzes", label: "Quizzes" },
+  { id: "leaderboard", path: "/quizzes", label: "Leaderboard" },
+  { id: "polls", path: "/polls", label: "Polls" },
+  { id: "settings", path: "/settings", label: "Settings" },
+  { id: "upload", path: "/upload", label: "Upload" },
+  { id: "custom", path: "custom", label: "Custom" },
+];
+
+const templates: NotifTemplate[] = [
+  {
+    id: "new-materials",
+    label: "New materials available",
+    title: "New study materials are live",
+    body: "Fresh notes and resources just landed. Open the app to browse what's new for your subjects.",
+    type: "material",
+    link: "/materials",
+    audience: "all",
+    sendPush: true,
+    sendEmail: true,
+  },
+  {
+    id: "complete-profile",
+    label: "Complete your profile",
+    title: "Finish setting up your profile",
+    body: "Add a photo, banner, and short bio so classmates and teachers can recognize you on GetMaterials.",
+    type: "reminder",
+    link: "/settings",
+    audience: "incomplete_profile",
+    sendPush: true,
+    sendEmail: true,
+  },
+  {
+    id: "add-materials",
+    label: "Upload your first material",
+    title: "Share your first material",
+    body: "Help your batch by uploading notes, PDFs, or videos. Your first upload unlocks contributor badges.",
+    type: "reminder",
+    link: "/upload",
+    audience: "no_uploads",
+    sendPush: true,
+    sendEmail: true,
+  },
+  {
+    id: "leaderboard",
+    label: "Climb the quiz leaderboard",
+    title: "Climb the quiz leaderboard",
+    body: "Take a quiz and see how you rank against other students. Can you make the top 10?",
+    type: "quiz",
+    link: "/quizzes",
+    audience: "students",
+    sendPush: true,
+    sendEmail: false,
+  },
+  {
+    id: "new-quiz",
+    label: "New quiz challenge",
+    title: "A new quiz challenge awaits",
+    body: "Test yourself with a fresh quiz. Short, focused, and a great way to revise before exams.",
+    type: "quiz",
+    link: "/quizzes",
+    audience: "students",
+    sendPush: true,
+    sendEmail: false,
+  },
+  {
+    id: "new-poll",
+    label: "New poll",
+    title: "New poll — cast your vote",
+    body: "We've posted a new poll. Share your opinion and see what your peers think.",
+    type: "announcement",
+    link: "/polls",
+    audience: "all",
+    sendPush: true,
+    sendEmail: false,
+  },
+  {
+    id: "announcement",
+    label: "General announcement",
+    title: "An update from GetMaterials",
+    body: "We have an important update for you. Open the app to read the full announcement.",
+    type: "announcement",
+    link: "/",
+    audience: "all",
+    sendPush: true,
+    sendEmail: true,
+  },
+];
 
 export default function NotificationsPage() {
   const [history, setHistory] = useState<SentNotification[]>([]);
+  const [historyTotal, setHistoryTotal] = useState(0);
+  const [historyPages, setHistoryPages] = useState(1);
+  const [historyPage, setHistoryPage] = useState(1);
+  const HISTORY_LIMIT = 20;
   const [stats, setStats] = useState<Record<string, AudienceStat>>({});
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [clearAllOpen, setClearAllOpen] = useState(false);
   const [sending, setSending] = useState(false);
+  const [clearing, setClearing] = useState(false);
   const [error, setError] = useState("");
 
   const [title, setTitle] = useState("");
@@ -75,15 +213,24 @@ export default function NotificationsPage() {
   const [type, setType] = useState<NotificationType>("announcement");
   const [audience, setAudience] = useState<Audience>("all");
   const [link, setLink] = useState("");
+  const [linkPreset, setLinkPreset] = useState("custom");
   const [college, setCollege] = useState("");
   const [targetUser, setTargetUser] = useState("");
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [userSearch, setUserSearch] = useState("");
+  const [sendPush, setSendPush] = useState(true);
+  const [sendEmail, setSendEmail] = useState(false);
+  const [activeTemplate, setActiveTemplate] = useState("");
 
   const [colleges, setColleges] = useState<{ _id: string; name: string }[]>([]);
-  const [users, setUsers] = useState<{ _id: string; name: string; email: string }[]>([]);
+  const [users, setUsers] = useState<
+    { _id: string; name: string; email: string }[]
+  >([]);
 
   useEffect(() => {
-    load();
-  }, []);
+    load(historyPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [historyPage]);
 
   useEffect(() => {
     if (audience === "college" && colleges.length === 0) {
@@ -92,7 +239,10 @@ export default function NotificationsPage() {
         .then((data) => setColleges(data.colleges || []))
         .catch(() => toast.error("Failed to load colleges"));
     }
-    if (audience === "user" && users.length === 0) {
+    if (
+      (audience === "user" || audience === "users") &&
+      users.length === 0
+    ) {
       fetch("/api/users")
         .then((res) => res.json())
         .then((data) => setUsers(data.users || []))
@@ -100,15 +250,30 @@ export default function NotificationsPage() {
     }
   }, [audience, colleges.length, users.length]);
 
-  const load = async () => {
+  const filteredUsers = useMemo(() => {
+    const q = userSearch.trim().toLowerCase();
+    if (!q) return users;
+    return users.filter(
+      (u) =>
+        u.name?.toLowerCase().includes(q) ||
+        u.email?.toLowerCase().includes(q),
+    );
+  }, [users, userSearch]);
+
+  const load = async (page = historyPage) => {
     try {
       const [historyRes, statsRes] = await Promise.all([
-        fetch("/api/admin/notifications"),
+        fetch(
+          `/api/admin/notifications?page=${page}&limit=${HISTORY_LIMIT}`,
+        ),
         fetch("/api/admin/notifications/audiences"),
       ]);
       const historyData = await historyRes.json();
       const statsData = await statsRes.json();
       setHistory(historyData.notifications || []);
+      setHistoryTotal(historyData.total || 0);
+      setHistoryPages(historyData.pages || 1);
+      setHistoryPage(historyData.page || page);
       setStats(statsData.stats || {});
     } catch {
       toast.error("Failed to load notifications");
@@ -117,9 +282,40 @@ export default function NotificationsPage() {
     }
   };
 
+  const applyTemplate = (templateId: string) => {
+    setActiveTemplate(templateId);
+    const t = templates.find((item) => item.id === templateId);
+    if (!t) return;
+    setTitle(t.title);
+    setBody(t.body);
+    setType(t.type);
+    setAudience(t.audience);
+    setLink(t.link);
+    setSendPush(t.sendPush);
+    setSendEmail(t.sendEmail);
+    const preset = deepLinkPresets.find((p) => p.path === t.link && p.id !== "custom");
+    setLinkPreset(preset ? preset.id : "custom");
+  };
+
+  const handleLinkPreset = (presetId: string) => {
+    setLinkPreset(presetId);
+    const preset = deepLinkPresets.find((p) => p.id === presetId);
+    if (preset && preset.id !== "custom") setLink(preset.path);
+  };
+
+  const toggleUser = (id: string) => {
+    setSelectedUsers((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  };
+
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    if (!sendPush && !sendEmail) {
+      setError("Select at least one channel (Push or Email)");
+      return;
+    }
     setSending(true);
     try {
       const res = await fetch("/api/admin/notifications", {
@@ -133,6 +329,9 @@ export default function NotificationsPage() {
           link: link || undefined,
           college: audience === "college" ? college : undefined,
           targetUser: audience === "user" ? targetUser : undefined,
+          targetUsers: audience === "users" ? selectedUsers : undefined,
+          sendPush,
+          sendEmail,
         }),
       });
       const data = await res.json();
@@ -140,13 +339,18 @@ export default function NotificationsPage() {
         setError(data.error || "Failed to send notification");
         return;
       }
-      toast.success(
-        `Sent to ${data.delivery.recipients} user(s) · ${data.delivery.pushSent} push delivered`
-      );
+      const parts = [`Sent to ${data.delivery.recipients} user(s)`];
+      if (sendPush) parts.push(`${data.delivery.pushSent} push`);
+      if (sendEmail) parts.push(`${data.delivery.emailSent ?? 0} email`);
+      toast.success(parts.join(" · "));
       setTitle("");
       setBody("");
       setLink("");
-      load();
+      setLinkPreset("custom");
+      setSelectedUsers([]);
+      setActiveTemplate("");
+      setHistoryPage(1);
+      await load(1);
     } catch {
       setError("Something went wrong");
     } finally {
@@ -161,8 +365,8 @@ export default function NotificationsPage() {
         method: "DELETE",
       });
       if (res.ok) {
-        setHistory((prev) => prev.filter((n) => n.id !== deleteId));
-        toast.success("Notification removed");
+        toast.success("Removed from admin sent history");
+        await load(historyPage);
       } else {
         toast.error("Failed to remove notification");
       }
@@ -170,6 +374,29 @@ export default function NotificationsPage() {
       toast.error("Something went wrong. Please try again.");
     } finally {
       setDeleteId(null);
+    }
+  };
+
+  const handleClearAll = async () => {
+    setClearing(true);
+    try {
+      const res = await fetch("/api/admin/notifications?all=1", {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setHistory([]);
+        setHistoryTotal(0);
+        setHistoryPages(1);
+        setHistoryPage(1);
+        toast.success("Admin sent history cleared");
+      } else {
+        toast.error("Failed to clear notifications");
+      }
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setClearing(false);
+      setClearAllOpen(false);
     }
   };
 
@@ -186,10 +413,12 @@ export default function NotificationsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">App Notifications</h1>
+        <h1 className="text-2xl font-bold text-slate-900">
+          App & Email Notifications
+        </h1>
         <p className="text-slate-500 text-sm mt-1">
-          Send a push notification to the mobile app. It also appears in the
-          in-app notification inbox.
+          Send push, in-app inbox, and optional email to users. Use a template
+          or compose from scratch.
         </p>
       </div>
 
@@ -203,6 +432,31 @@ export default function NotificationsPage() {
               {error}
             </div>
           )}
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+              <span className="inline-flex items-center gap-1.5">
+                <HiOutlineTemplate className="text-violet-500" />
+                Template
+              </span>
+            </label>
+            <div className="grid grid-cols-1 gap-1.5 max-h-40 overflow-y-auto rounded-xl border border-slate-100 p-2">
+              {templates.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => applyTemplate(t.id)}
+                  className={`text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                    activeTemplate === t.id
+                      ? "bg-violet-50 text-violet-800 font-medium"
+                      : "text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -272,6 +526,32 @@ export default function NotificationsPage() {
             </div>
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Channels
+            </label>
+            <div className="flex flex-wrap gap-4">
+              <label className="inline-flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={sendPush}
+                  onChange={(e) => setSendPush(e.target.checked)}
+                  className="rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                />
+                Push + in-app
+              </label>
+              <label className="inline-flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={sendEmail}
+                  onChange={(e) => setSendEmail(e.target.checked)}
+                  className="rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                />
+                Email
+              </label>
+            </div>
+          </div>
+
           {audience === "college" && (
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
@@ -314,18 +594,77 @@ export default function NotificationsPage() {
             </div>
           )}
 
+          {audience === "users" && (
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Selected users ({selectedUsers.length})
+              </label>
+              <input
+                type="search"
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+                placeholder="Search by name or email…"
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 mb-2"
+              />
+              <div className="max-h-48 overflow-y-auto rounded-xl border border-slate-200 divide-y divide-slate-100">
+                {filteredUsers.length === 0 ? (
+                  <p className="p-3 text-xs text-slate-400">No users found</p>
+                ) : (
+                  filteredUsers.map((item) => (
+                    <label
+                      key={item._id}
+                      className="flex items-center gap-2.5 px-3 py-2 text-sm cursor-pointer hover:bg-slate-50"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedUsers.includes(item._id)}
+                        onChange={() => toggleUser(item._id)}
+                        className="rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                      />
+                      <span className="min-w-0 truncate">
+                        <span className="font-medium text-slate-800">
+                          {item.name}
+                        </span>
+                        <span className="text-slate-400"> · {item.email}</span>
+                      </span>
+                    </label>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
-              Deep link (optional)
+              Deep link
             </label>
-            <input
-              type="text"
-              value={link}
-              onChange={(e) => setLink(e.target.value)}
-              placeholder="/materials or /material/<id>"
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500"
-            />
-            <p className="text-xs text-slate-400 mt-1">
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              <select
+                value={linkPreset}
+                onChange={(e) => handleLinkPreset(e.target.value)}
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:border-violet-500"
+              >
+                {deepLinkPresets.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.label}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="text"
+                value={link}
+                onChange={(e) => {
+                  setLink(e.target.value);
+                  const match = deepLinkPresets.find(
+                    (p) => p.path === e.target.value && p.id !== "custom",
+                  );
+                  setLinkPreset(match ? match.id : "custom");
+                }}
+                placeholder="/materials or /material/<id>"
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500"
+              />
+            </div>
+            <p className="text-xs text-slate-400">
               Where the app should navigate when the notification is tapped.
             </p>
           </div>
@@ -343,9 +682,15 @@ export default function NotificationsPage() {
             </div>
           )}
 
+          {audience === "users" && selectedUsers.length > 0 && (
+            <p className="text-xs text-violet-600">
+              {selectedUsers.length} user(s) selected
+            </p>
+          )}
+
           <button
             type="submit"
-            disabled={sending}
+            disabled={sending || (audience === "users" && selectedUsers.length === 0)}
             className="w-full inline-flex items-center justify-center gap-2 py-2.5 bg-violet-600 text-white font-semibold text-sm rounded-xl hover:bg-violet-700 disabled:opacity-50"
           >
             <HiOutlinePaperAirplane className="text-lg" />
@@ -354,9 +699,30 @@ export default function NotificationsPage() {
         </form>
 
         <div className="lg:col-span-3 space-y-3">
-          <h2 className="text-sm font-semibold text-slate-700">
-            Sent history {history.length > 0 && `(${history.length})`}
-          </h2>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold text-slate-700">
+              Sent history{" "}
+              {historyTotal > 0 && (
+                <span className="font-normal text-slate-400">
+                  ({historyTotal} total
+                  {historyPages > 1
+                    ? ` · page ${historyPage}/${historyPages}`
+                    : ""}
+                  )
+                </span>
+              )}
+            </h2>
+            {historyTotal > 0 && (
+              <button
+                type="button"
+                onClick={() => setClearAllOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+              >
+                <HiOutlineTrash className="w-3.5 h-3.5" />
+                Clear all
+              </button>
+            )}
+          </div>
 
           {history.length === 0 ? (
             <div className="text-center py-16 bg-white rounded-2xl border border-slate-100">
@@ -372,7 +738,9 @@ export default function NotificationsPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-semibold text-slate-900">{item.title}</p>
+                      <p className="font-semibold text-slate-900">
+                        {item.title}
+                      </p>
                       <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-violet-50 text-violet-700 capitalize">
                         {item.type}
                       </span>
@@ -381,12 +749,22 @@ export default function NotificationsPage() {
                           ? item.college
                           : item.audience === "user" && item.targetUser
                             ? item.targetUser.email
-                            : audienceLabels[item.audience]}
+                            : item.audience === "users"
+                              ? `${item.targetUsersCount || item.recipientCount} users`
+                              : audienceLabels[item.audience] || item.audience}
                       </span>
+                      {item.channels?.email && (
+                        <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-sky-50 text-sky-700 inline-flex items-center gap-0.5">
+                          <HiOutlineMail className="w-3 h-3" />
+                          Email
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm text-slate-700 mt-1">{item.body}</p>
                     {item.link && (
-                      <p className="text-xs text-violet-600 mt-1">{item.link}</p>
+                      <p className="text-xs text-violet-600 mt-1">
+                        {item.link}
+                      </p>
                     )}
                   </div>
                   <button
@@ -398,10 +776,18 @@ export default function NotificationsPage() {
                 </div>
                 <div className="flex items-center gap-3 mt-3 text-xs text-slate-400 flex-wrap">
                   <span>{item.recipientCount} recipients</span>
-                  <span>{item.pushSent} delivered</span>
-                  {item.pushFailed > 0 && (
+                  <span>{item.pushSent} push</span>
+                  {(item.pushFailed || 0) > 0 && (
                     <span className="text-amber-600">
-                      {item.pushFailed} failed
+                      {item.pushFailed} push failed
+                    </span>
+                  )}
+                  {(item.emailSent || 0) > 0 && (
+                    <span>{item.emailSent} email</span>
+                  )}
+                  {(item.emailFailed || 0) > 0 && (
+                    <span className="text-amber-600">
+                      {item.emailFailed} email failed
                     </span>
                   )}
                   <span>{item.readCount} read</span>
@@ -419,17 +805,57 @@ export default function NotificationsPage() {
               </div>
             ))
           )}
+
+          {historyPages > 1 && (
+            <div className="flex items-center justify-between gap-3 pt-2">
+              <button
+                type="button"
+                disabled={historyPage <= 1}
+                onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
+                className="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+              >
+                Previous
+              </button>
+              <p className="text-xs text-slate-500">
+                Page {historyPage} of {historyPages}
+              </p>
+              <button
+                type="button"
+                disabled={historyPage >= historyPages}
+                onClick={() =>
+                  setHistoryPage((p) => Math.min(historyPages, p + 1))
+                }
+                className="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
       <ConfirmDialog
         open={!!deleteId}
-        title="Remove Notification"
-        message="This removes it from the in-app inbox. Already delivered pushes cannot be recalled."
+        title="Remove from sent history"
+        message="This hides the notification from admin sent history only. User inboxes and already delivered pushes are not affected."
         confirmLabel="Remove"
         variant="danger"
         onConfirm={handleDelete}
         onCancel={() => setDeleteId(null)}
+      />
+
+      <ConfirmDialog
+        open={clearAllOpen}
+        title="Clear admin sent history"
+        message={
+          clearing
+            ? "Clearing…"
+            : "This clears the admin sent-history list only. Notifications stay in every user's inbox. Delivered pushes cannot be recalled."
+        }
+        confirmLabel="Clear history"
+        variant="danger"
+        onConfirm={handleClearAll}
+        onCancel={() => !clearing && setClearAllOpen(false)}
       />
     </div>
   );
