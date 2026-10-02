@@ -69,3 +69,21 @@ button, a {
   --scroll-thumb-hover: #f3e8ff;
   --scroll-track: rgba(255, 255, 255, 0.1);
 }
+
+/* Phone widths: keep table columns intact and scroll them sideways. */
+main table {
+  width: max-content;
+  min-width: 48rem;
+}
+
+main th,
+main td {
+  white-space: nowrap;
+}
+
+main .overflow-hidden:has(table),
+main .overflow-x-auto {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}

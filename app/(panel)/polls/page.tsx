@@ -212,8 +212,8 @@ export default function PollsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-slate-900">Polls & Surveys</h1>
           <p className="text-slate-500 text-sm mt-1">
             Ask users questions like &quot;How does GetMaterials feel?&quot; or &quot;Should we add this feature?&quot;
@@ -221,7 +221,7 @@ export default function PollsPage() {
         </div>
         <button
           onClick={openCreate}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-violet-600 text-white text-sm font-semibold rounded-xl hover:bg-violet-700 transition-colors"
+          className="inline-flex w-full sm:w-auto shrink-0 items-center justify-center gap-2 px-4 py-2.5 bg-violet-600 text-white text-sm font-semibold rounded-xl hover:bg-violet-700 transition-colors"
         >
           <HiOutlinePlus className="text-lg" />
           Create Poll
@@ -363,10 +363,10 @@ export default function PollsPage() {
       ) : (
         <div className="grid gap-4">
           {polls.map((poll) => (
-            <div key={poll._id} className="bg-white rounded-xl border border-slate-100 p-5">
-              <div className="flex items-start justify-between gap-4">
+            <div key={poll._id} className="bg-white rounded-xl border border-slate-100 p-4 sm:p-5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex items-start gap-3 flex-1 min-w-0">
-                  <div className="w-20 h-14 rounded-lg overflow-hidden border border-slate-100 bg-slate-100 shrink-0">
+                  <div className="w-16 h-12 sm:w-20 sm:h-14 rounded-lg overflow-hidden border border-slate-100 bg-slate-100 shrink-0">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={poll.thumbnailUrl || "/images/default-poll.png"}
@@ -375,7 +375,7 @@ export default function PollsPage() {
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-slate-900">{poll.question}</h3>
+                    <h3 className="font-semibold text-slate-900 break-words">{poll.question}</h3>
                     {poll.slug ? (
                       <p className="text-xs text-slate-400 font-mono mt-0.5 truncate">
                         /polls/{poll.slug}
@@ -384,7 +384,7 @@ export default function PollsPage() {
                     {poll.description && (
                       <p className="text-sm text-slate-500 mt-0.5">{poll.description}</p>
                     )}
-                    <div className="flex items-center gap-3 mt-2">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2">
                       <span className="px-2 py-0.5 text-xs font-medium bg-slate-100 text-slate-600 rounded">
                         {typeLabels[poll.type]}
                       </span>
@@ -395,7 +395,7 @@ export default function PollsPage() {
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
                   <button
                     onClick={() => viewResponses(poll._id)}
                     className="p-2 text-slate-400 hover:text-violet-600 rounded-lg hover:bg-violet-50"
@@ -438,13 +438,13 @@ export default function PollsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
             <div className="p-6 border-b border-slate-100">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h2 className="text-lg font-bold text-slate-900">{viewPoll.question}</h2>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 className="text-lg font-bold text-slate-900 break-words">{viewPoll.question}</h2>
                   {viewPoll.description && (
                     <p className="text-sm text-slate-500 mt-0.5">{viewPoll.description}</p>
                   )}
-                  <div className="flex items-center gap-3 mt-2">
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
                     <span className="px-2 py-0.5 text-xs font-medium bg-slate-100 text-slate-600 rounded">
                       {typeLabels[viewPoll.type]}
                     </span>
@@ -455,7 +455,7 @@ export default function PollsPage() {
                 </div>
                 <button
                   onClick={() => setViewPoll(null)}
-                  className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
+                  className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 shrink-0"
                 >
                   ✕
                 </button>
@@ -489,8 +489,8 @@ export default function PollsPage() {
                             {resp.user?.role || "user"}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-400">{resp.user?.email}</p>
-                        <p className="text-sm text-slate-700 mt-1 font-medium">{resp.answer}</p>
+                        <p className="text-xs text-slate-400 break-all">{resp.user?.email}</p>
+                        <p className="text-sm text-slate-700 mt-1 font-medium break-words">{resp.answer}</p>
                         <p className="text-[10px] text-slate-400 mt-1">
                           {new Date(resp.createdAt).toLocaleDateString("en-IN", {
                             day: "numeric",

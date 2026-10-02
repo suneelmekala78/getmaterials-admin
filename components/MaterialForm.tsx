@@ -321,8 +321,8 @@ export function MaterialForm({
     const incoming = Array.from(files);
     const next = [...attachments];
     for (const file of incoming) {
-      if (next.length >= 10) {
-        toast.error("Maximum 10 resources");
+      if (next.length >= 20) {
+        toast.error("Maximum 20 resources");
         break;
       }
       if (file.size > FILE_MAX_MB * 1024 * 1024) {
@@ -346,8 +346,8 @@ export function MaterialForm({
   };
 
   const addEmptyResource = (type: AttachmentType) => {
-    if (attachments.length >= 10) {
-      toast.error("Maximum 10 resources");
+    if (attachments.length >= 20) {
+      toast.error("Maximum 20 resources");
       return;
     }
     const item: AttachmentItem = { id: crypto.randomUUID(), type };
