@@ -20,6 +20,7 @@ export default function AdminReviewsPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "approved" | "hidden">("all");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/reviews")
@@ -30,6 +31,8 @@ export default function AdminReviewsPage() {
   }, []);
 
   const toggleApproval = async (id: string, isApproved: boolean) => {
+    if (busyId) return;
+    setBusyId(id);
     try {
       const res = await fetch("/api/reviews", {
         method: "PATCH",
@@ -46,6 +49,8 @@ export default function AdminReviewsPage() {
       }
     } catch {
       toast.error("Something went wrong. Please try again.");
+    } finally {
+      setBusyId(null);
     }
   };
 
@@ -162,18 +167,28 @@ export default function AdminReviewsPage() {
                   {review.isApproved ? (
                     <button
                       onClick={() => toggleApproval(review._id, false)}
-                      className="p-2 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors"
-                      title="Hide review"
+                      disabled={busyId === review._id}
+                      className="p-2 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={busyId === review._id ? "Updating..." : "Hide review"}
                     >
-                      <HiOutlineBan className="w-4 h-4" />
+                      {busyId === review._id ? (
+                        <span className="w-4 h-4 border-2 border-slate-300 border-t-red-500 rounded-full animate-spin inline-block" />
+                      ) : (
+                        <HiOutlineBan className="w-4 h-4" />
+                      )}
                     </button>
                   ) : (
                     <button
                       onClick={() => toggleApproval(review._id, true)}
-                      className="p-2 text-slate-400 hover:text-emerald-600 rounded-lg hover:bg-emerald-50 transition-colors"
-                      title="Approve review"
+                      disabled={busyId === review._id}
+                      className="p-2 text-slate-400 hover:text-emerald-600 rounded-lg hover:bg-emerald-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={busyId === review._id ? "Updating..." : "Approve review"}
                     >
-                      <HiOutlineCheck className="w-4 h-4" />
+                      {busyId === review._id ? (
+                        <span className="w-4 h-4 border-2 border-slate-300 border-t-emerald-500 rounded-full animate-spin inline-block" />
+                      ) : (
+                        <HiOutlineCheck className="w-4 h-4" />
+                      )}
                     </button>
                   )}
                   <button

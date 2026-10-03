@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BookOpen, Plus, Edit, Trash2, X, Save, Loader2, ImagePlus } from "lucide-react";
+import { BookOpen, Plus, Edit, Trash2, X, Loader2, ImagePlus } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { uploadBrowserFile } from "@/lib/upload-file";
 import toast from "react-hot-toast";
@@ -437,10 +437,10 @@ export default function SubjectsAdminPage() {
                           <button
                             onClick={handleSave}
                             disabled={saving}
-                            className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-50"
+                            className="px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Save"
                           >
-                            <Save className="w-4 h-4" />
+                            {saving ? "Saving..." : "Save"}
                           </button>
                           <button
                             onClick={cancelEdit}

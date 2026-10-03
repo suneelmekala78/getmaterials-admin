@@ -254,9 +254,13 @@ export default function AdminUsersPage() {
                           onClick={() => updateUser(user._id, "activate")}
                           disabled={updating === user._id}
                           className="p-2 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-50"
-                          title="Activate"
+                          title={updating === user._id ? "Updating..." : "Activate"}
                         >
-                          <HiOutlineCheckCircle className="w-4 h-4" />
+                          {updating === user._id ? (
+                            <span className="w-4 h-4 border-2 border-emerald-200 border-t-emerald-600 rounded-full animate-spin inline-block" />
+                          ) : (
+                            <HiOutlineCheckCircle className="w-4 h-4" />
+                          )}
                         </button>
                       )}
                       {user.status !== "suspended" && (
@@ -264,9 +268,13 @@ export default function AdminUsersPage() {
                           onClick={() => updateUser(user._id, "suspend")}
                           disabled={updating === user._id}
                           className="p-2 text-amber-500 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-colors disabled:opacity-50"
-                          title="Suspend"
+                          title={updating === user._id ? "Updating..." : "Suspend"}
                         >
-                          <HiOutlineBan className="w-4 h-4" />
+                          {updating === user._id ? (
+                            <span className="w-4 h-4 border-2 border-amber-200 border-t-amber-600 rounded-full animate-spin inline-block" />
+                          ) : (
+                            <HiOutlineBan className="w-4 h-4" />
+                          )}
                         </button>
                       )}
                       <button

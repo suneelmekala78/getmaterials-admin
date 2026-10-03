@@ -26,6 +26,7 @@ export default function ContactsPage() {
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchMessages();
@@ -44,6 +45,8 @@ export default function ContactsPage() {
   };
 
   const updateStatus = async (id: string, status: string) => {
+    if (busyId) return;
+    setBusyId(id);
     try {
       const res = await fetch("/api/contacts", {
         method: "PATCH",
@@ -57,6 +60,8 @@ export default function ContactsPage() {
       }
     } catch {
       toast.error("Failed to update status");
+    } finally {
+      setBusyId(null);
     }
   };
 
@@ -179,9 +184,10 @@ export default function ContactsPage() {
                         {msg.status !== "replied" && (
                           <button
                             onClick={() => updateStatus(msg._id, "replied")}
-                            className="px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+                            disabled={busyId === msg._id}
+                            className="px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 rounded-lg hover:bg-green-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            Mark as Replied
+                            {busyId === msg._id ? "Updating..." : "Mark as Replied"}
                           </button>
                         )}
                       </div>

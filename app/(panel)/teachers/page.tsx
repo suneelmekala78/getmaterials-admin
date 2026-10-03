@@ -67,7 +67,7 @@ export default function TeachersPage() {
   };
 
   const handleApproveApplication = async (id: string) => {
-    setActionLoading(id);
+    setActionLoading(`approve-app:${id}`);
     try {
       const res = await fetch(`/api/admin/role-change-requests/${id}/approve`, {
         method: "POST",
@@ -87,7 +87,7 @@ export default function TeachersPage() {
   };
 
   const handleRejectApplication = async (id: string) => {
-    setActionLoading(id);
+    setActionLoading(`reject-app:${id}`);
     try {
       const res = await fetch(`/api/admin/role-change-requests/${id}/reject`, {
         method: "POST",
@@ -107,7 +107,7 @@ export default function TeachersPage() {
   };
 
   const handleApprove = async (id: string) => {
-    setActionLoading(id);
+    setActionLoading(`approve:${id}`);
     try {
       const res = await fetch(`/api/teachers/${id}/approve`, { method: "POST" });
       if (res.ok) {
@@ -124,7 +124,7 @@ export default function TeachersPage() {
   };
 
   const handleReject = async (id: string) => {
-    setActionLoading(id);
+    setActionLoading(`reject:${id}`);
     try {
       const res = await fetch(`/api/teachers/${id}/reject`, { method: "POST" });
       if (res.ok) {
@@ -235,17 +235,17 @@ export default function TeachersPage() {
                 <div className="flex items-center gap-2 shrink-0">
                   <button
                     onClick={() => handleApproveApplication(app._id)}
-                    disabled={actionLoading === app._id}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-700 text-xs font-medium rounded-lg hover:bg-emerald-100 transition-colors cursor-pointer disabled:opacity-50"
+                    disabled={actionLoading?.endsWith(`:${app._id}`)}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-700 text-xs font-medium rounded-lg hover:bg-emerald-100 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <UserCheck className="w-3.5 h-3.5" /> Approve
+                    <UserCheck className="w-3.5 h-3.5" /> {actionLoading === `approve-app:${app._id}` ? "Approving..." : "Approve"}
                   </button>
                   <button
                     onClick={() => handleRejectApplication(app._id)}
-                    disabled={actionLoading === app._id}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-700 text-xs font-medium rounded-lg hover:bg-red-100 transition-colors cursor-pointer disabled:opacity-50"
+                    disabled={actionLoading?.endsWith(`:${app._id}`)}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-700 text-xs font-medium rounded-lg hover:bg-red-100 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <UserX className="w-3.5 h-3.5" /> Reject
+                    <UserX className="w-3.5 h-3.5" /> {actionLoading === `reject-app:${app._id}` ? "Rejecting..." : "Reject"}
                   </button>
                 </div>
               </div>
@@ -288,17 +288,17 @@ export default function TeachersPage() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleApprove(teacher._id)}
-                    disabled={actionLoading === teacher._id}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-700 text-xs font-medium rounded-lg hover:bg-emerald-100 transition-colors cursor-pointer disabled:opacity-50"
+                    disabled={actionLoading?.endsWith(`:${teacher._id}`)}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-700 text-xs font-medium rounded-lg hover:bg-emerald-100 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <UserCheck className="w-3.5 h-3.5" /> Approve
+                    <UserCheck className="w-3.5 h-3.5" /> {actionLoading === `approve:${teacher._id}` ? "Approving..." : "Approve"}
                   </button>
                   <button
                     onClick={() => handleReject(teacher._id)}
-                    disabled={actionLoading === teacher._id}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-700 text-xs font-medium rounded-lg hover:bg-red-100 transition-colors cursor-pointer disabled:opacity-50"
+                    disabled={actionLoading?.endsWith(`:${teacher._id}`)}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-700 text-xs font-medium rounded-lg hover:bg-red-100 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <UserX className="w-3.5 h-3.5" /> Reject
+                    <UserX className="w-3.5 h-3.5" /> {actionLoading === `reject:${teacher._id}` ? "Rejecting..." : "Reject"}
                   </button>
                 </div>
               </div>

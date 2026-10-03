@@ -216,6 +216,7 @@ export function MaterialForm({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
+  const [submitMode, setSubmitMode] = useState<"draft" | "publish" | null>(null);
   const [success, setSuccess] = useState<"draft" | "publish" | null>(null);
   const [subjects, setSubjects] = useState(initialSubjects);
   const [chapters, setChapters] = useState(initialChapters);
@@ -438,6 +439,7 @@ export function MaterialForm({
 
   const handleSubmit = async (asDraft: boolean) => {
     setFieldErrors({});
+    setSubmitMode(asDraft ? "draft" : "publish");
     setLoading(true);
 
     const errors: Record<string, string> = {};
@@ -451,6 +453,7 @@ export function MaterialForm({
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       setLoading(false);
+      setSubmitMode(null);
       toast.error(errors[Object.keys(errors)[0]]);
       const el = document.getElementById(`field-${Object.keys(errors)[0]}`);
       if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -555,6 +558,7 @@ export function MaterialForm({
       );
     } finally {
       setLoading(false);
+      setSubmitMode(null);
     }
   };
 
@@ -1158,7 +1162,7 @@ export function MaterialForm({
             onClick={() => handleSubmit(true)}
             className="flex-1 py-3 rounded-xl border-2 border-slate-200 text-slate-700 font-semibold text-sm hover:bg-slate-50 disabled:opacity-50"
           >
-            Save as Draft
+            {loading && submitMode === "draft" ? "Saving..." : "Save as Draft"}
           </button>
           <button
             type="submit"
@@ -1166,7 +1170,7 @@ export function MaterialForm({
             className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[var(--primary)] text-white font-semibold text-sm hover:opacity-90 disabled:opacity-50"
           >
             <Rocket className="w-4 h-4" />
-            {loading
+            {loading && submitMode === "publish"
               ? isEdit
                 ? "Saving..."
                 : "Uploading..."

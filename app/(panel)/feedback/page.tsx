@@ -35,6 +35,7 @@ export default function FeedbackPage() {
   const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchFeedback();
@@ -53,6 +54,8 @@ export default function FeedbackPage() {
   };
 
   const toggleApproval = async (id: string, currentApproval: boolean) => {
+    if (busyId) return;
+    setBusyId(id);
     try {
       const res = await fetch("/api/feedback", {
         method: "PATCH",
@@ -67,6 +70,8 @@ export default function FeedbackPage() {
       }
     } catch {
       toast.error("Failed to update feedback");
+    } finally {
+      setBusyId(null);
     }
   };
 
@@ -173,13 +178,16 @@ export default function FeedbackPage() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => toggleApproval(item._id, item.isApproved)}
-                    className={`inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                    disabled={busyId === item._id}
+                    className={`inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                       item.isApproved
                         ? "text-amber-700 bg-amber-50 hover:bg-amber-100"
                         : "text-green-700 bg-green-50 hover:bg-green-100"
                     }`}
                   >
-                    {item.isApproved ? (
+                    {busyId === item._id ? (
+                      "Updating..."
+                    ) : item.isApproved ? (
                       <>
                         <HiOutlineX className="w-3.5 h-3.5" /> Unapprove
                       </>

@@ -54,6 +54,7 @@ export default function QuizzesPage() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
   const [viewQuizId, setViewQuizId] = useState<string | null>(null);
   const [viewQuizTitle, setViewQuizTitle] = useState("");
   const [attempts, setAttempts] = useState<Attempt[]>([]);
@@ -94,6 +95,8 @@ export default function QuizzesPage() {
   };
 
   const toggleActive = async (id: string, isActive: boolean) => {
+    if (busyId) return;
+    setBusyId(id);
     try {
       await fetch(`/api/quizzes/${id}`, {
         method: "PATCH",
@@ -105,6 +108,8 @@ export default function QuizzesPage() {
       );
     } catch {
       toast.error("Failed to update quiz status");
+    } finally {
+      setBusyId(null);
     }
   };
 
@@ -212,13 +217,14 @@ export default function QuizzesPage() {
                   <td className="px-6 py-4">
                     <button
                       onClick={() => toggleActive(quiz._id, quiz.isActive)}
-                      className={`px-2.5 py-1 text-xs font-medium rounded-full ${
+                      disabled={busyId === quiz._id}
+                      className={`px-2.5 py-1 text-xs font-medium rounded-full disabled:opacity-50 disabled:cursor-not-allowed ${
                         quiz.isActive
                           ? "bg-green-50 text-green-700"
                           : "bg-slate-100 text-slate-500"
                       }`}
                     >
-                      {quiz.isActive ? "Active" : "Inactive"}
+                      {busyId === quiz._id ? "Updating..." : quiz.isActive ? "Active" : "Inactive"}
                     </button>
                   </td>
                   <td className="px-6 py-4 text-right">

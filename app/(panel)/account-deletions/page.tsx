@@ -203,7 +203,7 @@ export default function AccountDeletionsPage() {
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-50 disabled:opacity-50"
                       >
                         <HiOutlineBan className="w-3.5 h-3.5" />
-                        Cancel
+                        {busyId === user._id && completeId !== user._id ? "Cancelling..." : "Cancel"}
                       </button>
                       <button
                         type="button"

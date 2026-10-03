@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Plus, Trash2, Pencil, X, Filter } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import toast from "react-hot-toast";
@@ -70,9 +70,11 @@ export default function CollegeAssignmentsPage() {
   const [chapters, setChapters] = useState<ChapterItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const formRef = useRef<HTMLDivElement>(null);
 
   // Filter
   const [filterCollege, setFilterCollege] = useState("");
@@ -152,8 +154,17 @@ export default function CollegeAssignmentsPage() {
     setShowForm(true);
   };
 
+  useEffect(() => {
+    if (!showForm) return;
+    requestAnimationFrame(() => {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, [showForm, editingId]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (saving) return;
+    setSaving(true);
     try {
       const payload = {
         ...(editingId ? { id: editingId } : {}),
@@ -186,6 +197,8 @@ export default function CollegeAssignmentsPage() {
       setAssignments(refreshed.assignments || []);
     } catch (err: any) {
       toast.error(err.message);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -257,7 +270,7 @@ export default function CollegeAssignmentsPage() {
 
       {/* Form */}
       {showForm && (
-        <div className="bg-white rounded-2xl p-6 border border-slate-100">
+        <div ref={formRef} className="bg-white rounded-2xl p-6 border border-slate-100 scroll-mt-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-semibold text-slate-900">
               {editingId ? "Edit Assignment" : "New Assignment"}
@@ -418,14 +431,16 @@ export default function CollegeAssignmentsPage() {
             <div className="flex items-center gap-3 pt-2">
               <button
                 type="submit"
-                className="px-5 py-2.5 bg-violet-600 text-white font-medium text-sm rounded-xl hover:bg-violet-700 transition-colors"
+                disabled={saving}
+                className="px-5 py-2.5 bg-violet-600 text-white font-medium text-sm rounded-xl hover:bg-violet-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {editingId ? "Update Assignment" : "Create Assignment"}
+                {saving ? (editingId ? "Updating..." : "Saving...") : editingId ? "Update Assignment" : "Create Assignment"}
               </button>
               <button
                 type="button"
                 onClick={resetForm}
-                className="px-5 py-2.5 text-slate-600 font-medium text-sm border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
+                disabled={saving}
+                className="px-5 py-2.5 text-slate-600 font-medium text-sm border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>

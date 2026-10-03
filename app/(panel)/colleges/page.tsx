@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Building2, Plus, Trash2, MapPin, Pencil, X, ChevronDown, ChevronRight, GraduationCap, GitBranch, Calendar, ImagePlus } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Building2, Plus, Trash2, MapPin, Pencil, X, ChevronDown, ChevronRight, GraduationCap, GitBranch, Calendar } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { uploadBrowserFile } from "@/lib/upload-file";
 import toast from "react-hot-toast";
@@ -26,6 +26,17 @@ interface CollegeBatch {
   endYear: number;
 }
 
+const DEFAULT_COLLEGE_LOGO = "/images/default-collage-logo.png";
+const DEFAULT_COLLEGE_BANNER = "/images/default-collage-banner.png";
+
+const EMPTY_SOCIALS = {
+  instagram: "",
+  linkedin: "",
+  youtube: "",
+  x: "",
+  facebook: "",
+};
+
 interface College {
   _id: string;
   name: string;
@@ -34,6 +45,16 @@ interface College {
   logo?: string;
   banner?: string;
   location?: string;
+  city?: string;
+  state?: string;
+  website?: string;
+  socials?: {
+    instagram?: string;
+    linkedin?: string;
+    youtube?: string;
+    x?: string;
+    facebook?: string;
+  };
   description?: string;
   status: string;
   programs: CollegeProgram[];
@@ -50,9 +71,22 @@ export default function AdminCollegesPage() {
   const [deleting, setDeleting] = useState(false);
   const [removingItem, setRemovingItem] = useState<string | null>(null);
   const [expandedCollege, setExpandedCollege] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [busyAction, setBusyAction] = useState<string | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
+
+  const emptyForm = () => ({
+    name: "",
+    code: "",
+    city: "",
+    state: "",
+    website: "",
+    description: "",
+    socials: { ...EMPTY_SOCIALS },
+  });
 
   // College form
-  const [form, setForm] = useState({ name: "", code: "", location: "", description: "" });
+  const [form, setForm] = useState(emptyForm);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState("");
@@ -87,7 +121,7 @@ export default function AdminCollegesPage() {
   };
 
   const resetForm = () => {
-    setForm({ name: "", code: "", location: "", description: "" });
+    setForm(emptyForm());
     setLogoFile(null);
     setBannerFile(null);
     setLogoPreview("");
@@ -98,9 +132,30 @@ export default function AdminCollegesPage() {
     setShowForm(false);
   };
 
+  const placeFromCollege = (c: College) => {
+    if (c.city || c.state) return { city: c.city || "", state: c.state || "" };
+    const [city, ...rest] = String(c.location || "").split(",");
+    return { city: city.trim(), state: rest.join(",").trim() };
+  };
+
   const startEdit = (c: College) => {
+    const place = placeFromCollege(c);
     setEditingId(c._id);
-    setForm({ name: c.name, code: c.code || "", location: c.location || "", description: c.description || "" });
+    setForm({
+      name: c.name,
+      code: c.code || "",
+      city: place.city,
+      state: place.state,
+      website: c.website || "",
+      description: c.description || "",
+      socials: {
+        instagram: c.socials?.instagram || "",
+        linkedin: c.socials?.linkedin || "",
+        youtube: c.socials?.youtube || "",
+        x: c.socials?.x || "",
+        facebook: c.socials?.facebook || "",
+      },
+    });
     setLogoFile(null);
     setBannerFile(null);
     setLogoPreview(c.logo || "");
@@ -109,6 +164,13 @@ export default function AdminCollegesPage() {
     setClearBanner(false);
     setShowForm(true);
   };
+
+  useEffect(() => {
+    if (!showForm) return;
+    requestAnimationFrame(() => {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, [showForm, editingId]);
 
   const pickImage = (kind: "logo" | "banner", file?: File) => {
     if (!file) return;
@@ -126,6 +188,8 @@ export default function AdminCollegesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (saving) return;
+    setSaving(true);
     try {
       let logoUrl: string | undefined;
       let bannerUrl: string | undefined;
@@ -138,13 +202,18 @@ export default function AdminCollegesPage() {
         bannerUrl = uploaded.fileUrl;
       }
 
+      const location = [form.city, form.state].filter(Boolean).join(", ");
       const res = await fetch("/api/colleges", {
         method: editingId ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: form.name,
           code: form.code,
-          location: form.location,
+          city: form.city,
+          state: form.state,
+          location,
+          website: form.website,
+          socials: form.socials,
           description: form.description,
           ...(editingId ? { id: editingId } : {}),
           ...(logoUrl ? { logoUrl } : {}),
@@ -160,6 +229,8 @@ export default function AdminCollegesPage() {
       fetchColleges();
     } catch (err: any) {
       toast.error(err.message || "Failed to save college");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -188,7 +259,8 @@ export default function AdminCollegesPage() {
 
   // Program management
   const handleAddProgram = async (collegeId: string) => {
-    if (!programForm.key || !programForm.label) return;
+    if (!programForm.key || !programForm.label || busyAction) return;
+    setBusyAction(`program-${collegeId}`);
     try {
       const res = await fetch(`/api/colleges/programs`, {
         method: "POST",
@@ -203,6 +275,8 @@ export default function AdminCollegesPage() {
       fetchColleges();
     } catch (err: any) {
       toast.error(err.message);
+    } finally {
+      setBusyAction(null);
     }
   };
 
@@ -227,7 +301,8 @@ export default function AdminCollegesPage() {
 
   // Branch management
   const handleAddBranch = async (collegeId: string) => {
-    if (!branchForm.program || !branchForm.name) return;
+    if (!branchForm.program || !branchForm.name || busyAction) return;
+    setBusyAction(`branch-${collegeId}`);
     try {
       const sections = branchForm.sections.split(",").map(s => s.trim()).filter(Boolean);
       const res = await fetch(`/api/colleges/branches`, {
@@ -243,6 +318,8 @@ export default function AdminCollegesPage() {
       fetchColleges();
     } catch (err: any) {
       toast.error(err.message);
+    } finally {
+      setBusyAction(null);
     }
   };
 
@@ -267,7 +344,8 @@ export default function AdminCollegesPage() {
 
   // Batch management
   const handleAddBatch = async (collegeId: string) => {
-    if (!batchForm.program || !batchForm.startYear || !batchForm.endYear) return;
+    if (!batchForm.program || !batchForm.startYear || !batchForm.endYear || busyAction) return;
+    setBusyAction(`batch-${collegeId}`);
     try {
       const res = await fetch(`/api/colleges/batches`, {
         method: "POST",
@@ -282,6 +360,8 @@ export default function AdminCollegesPage() {
       fetchColleges();
     } catch (err: any) {
       toast.error(err.message);
+    } finally {
+      setBusyAction(null);
     }
   };
 
@@ -331,7 +411,7 @@ export default function AdminCollegesPage() {
 
       {/* Add/Edit college form */}
       {showForm && (
-        <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+        <div ref={formRef} className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm scroll-mt-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-semibold text-slate-900">{editingId ? "Edit College" : "Add New College"}</h2>
             <button onClick={resetForm} className="p-1 text-slate-400 hover:text-slate-600 rounded"><X className="w-4 h-4" /></button>
@@ -348,12 +428,43 @@ export default function AdminCollegesPage() {
                 <p className="text-[11px] text-slate-400 mt-1">Optional. Use this for EAMCET/JEE/university codes. Degree, intermediate, and IT colleges can leave it blank — we will generate a URL key from the name.</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Location</label>
-                <input type="text" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="City, State" className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20" />
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">City</label>
+                <input type="text" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="Hyderabad" className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20" />
               </div>
               <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">State</label>
+                <input type="text" value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} placeholder="Telangana" className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20" />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Website</label>
+                <input type="url" value={form.website} onChange={(e) => setForm({ ...form, website: e.target.value })} placeholder="https://college.edu" className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20" />
+              </div>
+              <div className="sm:col-span-2 lg:col-span-4">
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">Description</label>
                 <input type="text" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Brief description" className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20" />
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-slate-700 mb-2">Social links</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {([
+                  ["instagram", "Instagram"],
+                  ["linkedin", "LinkedIn"],
+                  ["youtube", "YouTube"],
+                  ["x", "X / Twitter"],
+                  ["facebook", "Facebook"],
+                ] as const).map(([key, label]) => (
+                  <div key={key}>
+                    <label className="block text-xs text-slate-500 mb-1">{label}</label>
+                    <input
+                      type="url"
+                      value={form.socials[key]}
+                      onChange={(e) => setForm({ ...form, socials: { ...form.socials, [key]: e.target.value } })}
+                      placeholder="https://"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500"
+                    />
+                  </div>
+                ))}
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -362,12 +473,12 @@ export default function AdminCollegesPage() {
                 <p className="text-xs text-slate-400 mb-2">Square mark, shown on college cards. PNG or JPG, up to 5 MB.</p>
                 <label className="flex items-center gap-3 cursor-pointer rounded-xl border border-dashed border-slate-200 px-3 py-3 hover:bg-slate-50">
                   <div className="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden flex items-center justify-center shrink-0">
-                    {logoPreview && !clearLogo ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={logoPreview} alt="" className="w-full h-full object-contain bg-white" />
-                    ) : (
-                      <ImagePlus className="w-5 h-5 text-slate-400" />
-                    )}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={logoPreview && !clearLogo ? logoPreview : DEFAULT_COLLEGE_LOGO}
+                      alt=""
+                      className="w-full h-full object-cover bg-white"
+                    />
                   </div>
                   <span className="text-sm text-slate-600">{logoFile?.name || "Choose logo"}</span>
                   <input
@@ -392,12 +503,12 @@ export default function AdminCollegesPage() {
                 <p className="text-xs text-slate-400 mb-2">Wide cover, about 16:9. PNG or JPG, up to 5 MB.</p>
                 <label className="flex items-center gap-3 cursor-pointer rounded-xl border border-dashed border-slate-200 px-3 py-3 hover:bg-slate-50">
                   <div className="w-24 h-12 rounded-xl bg-slate-100 overflow-hidden flex items-center justify-center shrink-0">
-                    {bannerPreview && !clearBanner ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={bannerPreview} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <ImagePlus className="w-5 h-5 text-slate-400" />
-                    )}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={bannerPreview && !clearBanner ? bannerPreview : DEFAULT_COLLEGE_BANNER}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   <span className="text-sm text-slate-600">{bannerFile?.name || "Choose banner"}</span>
                   <input
@@ -419,10 +530,14 @@ export default function AdminCollegesPage() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <button type="submit" className="px-5 py-2.5 bg-violet-600 text-white font-medium text-sm rounded-xl hover:bg-violet-700 transition-colors">
-                {editingId ? "Update College" : "Save College"}
+              <button
+                type="submit"
+                disabled={saving}
+                className="px-5 py-2.5 bg-violet-600 text-white font-medium text-sm rounded-xl hover:bg-violet-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {saving ? (editingId ? "Updating..." : "Saving...") : editingId ? "Update College" : "Save College"}
               </button>
-              <button type="button" onClick={resetForm} className="px-5 py-2.5 text-slate-600 font-medium text-sm border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">Cancel</button>
+              <button type="button" onClick={resetForm} disabled={saving} className="px-5 py-2.5 text-slate-600 font-medium text-sm border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Cancel</button>
             </div>
           </form>
         </div>
@@ -439,18 +554,18 @@ export default function AdminCollegesPage() {
                 <div className="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-slate-50/50" onClick={() => setExpandedCollege(isExpanded ? null : college._id)}>
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 bg-violet-50 rounded-xl overflow-hidden flex items-center justify-center">
-                      {college.logo ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={college.logo} alt="" className="w-full h-full object-contain bg-white" />
-                      ) : (
-                        <Building2 className="w-5 h-5 text-violet-600" />
-                      )}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={college.logo || DEFAULT_COLLEGE_LOGO}
+                        alt=""
+                        className="w-full h-full object-cover bg-white"
+                      />
                     </div>
                     <div>
                       <h3 className="font-semibold text-slate-900">{college.name}</h3>
                       <div className="flex items-center gap-3 mt-0.5 text-xs text-slate-500">
                         {college.code ? <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded">{college.code}</span> : <span className="text-slate-400">No official code</span>}
-                        {college.location && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{college.location}</span>}
+                        {college.location && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{[college.city, college.state].filter(Boolean).join(", ") || college.location}</span>}
                         <span>{college.programs?.length || 0} programs</span>
                         <span>{college.branches?.length || 0} branches</span>
                       </div>
@@ -488,7 +603,13 @@ export default function AdminCollegesPage() {
                             <input type="number" value={programForm.durationYears} onChange={(e) => setProgramForm({ ...programForm, durationYears: parseInt(e.target.value) || 4 })} placeholder="Years" min={1} max={10} className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500" />
                             <input type="number" value={programForm.totalSemesters} onChange={(e) => setProgramForm({ ...programForm, totalSemesters: parseInt(e.target.value) || 8 })} placeholder="Semesters" min={1} max={20} className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500" />
                           </div>
-                          <button onClick={() => handleAddProgram(college._id)} className="px-4 py-2 bg-violet-600 text-white text-xs font-medium rounded-lg hover:bg-violet-700">Add</button>
+                          <button
+                            onClick={() => handleAddProgram(college._id)}
+                            disabled={busyAction === `program-${college._id}`}
+                            className="px-4 py-2 bg-violet-600 text-white text-xs font-medium rounded-lg hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {busyAction === `program-${college._id}` ? "Adding..." : "Add"}
+                          </button>
                         </div>
                       )}
                       {college.programs?.length > 0 ? (
@@ -528,7 +649,13 @@ export default function AdminCollegesPage() {
                             <input type="text" value={branchForm.name} onChange={(e) => setBranchForm({ ...branchForm, name: e.target.value })} placeholder="Branch (e.g., CSE)" className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500" />
                             <input type="text" value={branchForm.sections} onChange={(e) => setBranchForm({ ...branchForm, sections: e.target.value })} placeholder="Sections (e.g., A, B, C)" className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500" />
                           </div>
-                          <button onClick={() => handleAddBranch(college._id)} className="px-4 py-2 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700">Add</button>
+                          <button
+                            onClick={() => handleAddBranch(college._id)}
+                            disabled={busyAction === `branch-${college._id}`}
+                            className="px-4 py-2 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {busyAction === `branch-${college._id}` ? "Adding..." : "Add"}
+                          </button>
                         </div>
                       )}
                       {college.branches?.length > 0 ? (
@@ -578,7 +705,13 @@ export default function AdminCollegesPage() {
                             <input type="number" value={batchForm.startYear} onChange={(e) => setBatchForm({ ...batchForm, startYear: parseInt(e.target.value) })} placeholder="Start Year" className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500" />
                             <input type="number" value={batchForm.endYear} onChange={(e) => setBatchForm({ ...batchForm, endYear: parseInt(e.target.value) })} placeholder="End Year" className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500" />
                           </div>
-                          <button onClick={() => handleAddBatch(college._id)} className="px-4 py-2 bg-amber-600 text-white text-xs font-medium rounded-lg hover:bg-amber-700">Add</button>
+                          <button
+                            onClick={() => handleAddBatch(college._id)}
+                            disabled={busyAction === `batch-${college._id}`}
+                            className="px-4 py-2 bg-amber-600 text-white text-xs font-medium rounded-lg hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {busyAction === `batch-${college._id}` ? "Adding..." : "Add"}
+                          </button>
                         </div>
                       )}
                       {college.batches?.length > 0 ? (
