@@ -11,10 +11,7 @@ function loginErrorMessage(code?: string | null) {
   if (code === "Configuration") {
     return "Admin auth is misconfigured. Set AUTH_SECRET (or NEXTAUTH_SECRET) and API_INTERNAL_URL, then retry.";
   }
-  if (code === "CredentialsSignin") {
-    return "Invalid email or password, or this email is not an admin.";
-  }
-  return "Invalid email or password, or this email is not an admin.";
+  return "Invalid email or password, or this account is not an admin or owner.";
 }
 
 export default function AdminLoginPage() {
@@ -140,7 +137,7 @@ export default function AdminLoginPage() {
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-6">
-          Use an allowlisted admin email and the same password as the website account.
+          Admins and owners sign in with the same password as their website account.
         </p>
       </div>
     </div>

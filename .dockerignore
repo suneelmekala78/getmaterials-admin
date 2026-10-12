@@ -1,0 +1,28 @@
+# Source / build artefacts
+node_modules
+.next
+out
+build
+dist
+npm-debug.log*
+*.tsbuildinfo
+next-env.d.ts
+
+# Environment files — NEVER bake secrets into the image
+.env
+.env.*
+
+# IDE / OS noise
+.git
+.gitignore
+.vscode
+.idea
+*.DS_Store
+Thumbs.db
+
+# CI / hosting noise
+*.md
+.github
+amplify.yml
+Dockerfile
+.dockerignore

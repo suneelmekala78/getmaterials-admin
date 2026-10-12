@@ -14,6 +14,8 @@ import {
   HiOutlineAcademicCap,
   HiOutlineChatAlt2,
   HiOutlineMail,
+  HiOutlineCode,
+  HiOutlineFlag,
 } from "react-icons/hi";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { UserAvatar } from "@/components/UserAvatar";
@@ -23,6 +25,8 @@ const mobileMenuLinks = [
   { name: "Subjects", href: "/subjects", icon: HiOutlineBookOpen },
   { name: "Chapters", href: "/chapters", icon: HiOutlineCollection },
   { name: "Quizzes", href: "/quizzes", icon: HiOutlinePuzzle },
+  { name: "Problems", href: "/problems", icon: HiOutlineCode },
+  { name: "Contests", href: "/contests", icon: HiOutlineFlag },
   { name: "Polls", href: "/polls", icon: HiOutlineSpeakerphone },
   { name: "Notifications", href: "/notifications", icon: HiOutlineBell },
   { name: "Reviews", href: "/reviews", icon: HiOutlineStar },

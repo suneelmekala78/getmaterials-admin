@@ -13,6 +13,7 @@ interface UserItem {
   avatar?: string;
   role: string;
   status: string;
+  isOwner?: boolean;
   createdAt: string;
   signupMeta?: {
     platform?: string;
@@ -48,11 +49,15 @@ export default function AdminUsersPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [updating, setUpdating] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [viewer, setViewer] = useState<{ id: string; isOwner: boolean }>({ id: "", isOwner: false });
 
   useEffect(() => {
     fetch("/api/users")
       .then((r) => r.json())
-      .then((data) => setUsers(data.users || []))
+      .then((data) => {
+        setUsers(data.users || []);
+        if (data.viewer) setViewer(data.viewer);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -90,7 +95,8 @@ export default function AdminUsersPage() {
         setUsers((prev) => prev.filter((u) => u._id !== deleteId));
         toast.success("User deleted");
       } else {
-        toast.error("Failed to delete user");
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || "Failed to delete user");
       }
     } catch {
       toast.error("Something went wrong. Please try again.");
@@ -134,7 +140,11 @@ export default function AdminUsersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Users</h1>
-          <p className="text-slate-500 mt-1">Manage all platform users.</p>
+          <p className="text-slate-500 mt-1">
+            {viewer.isOwner
+              ? "Manage all platform users. As an owner, you can change roles."
+              : "Manage all platform users. Owners change roles."}
+          </p>
         </div>
         <div className="flex items-center gap-3 text-sm text-slate-600 bg-white px-4 py-2 rounded-xl border border-slate-200">
           <HiOutlineUsers className="w-4 h-4 text-violet-500" />
@@ -162,6 +172,7 @@ export default function AdminUsersPage() {
           <option value="">All Roles</option>
           <option value="student">Student</option>
           <option value="teacher">Teacher</option>
+          <option value="college_admin">College admin</option>
           <option value="admin">Admin</option>
         </select>
         <select
@@ -205,16 +216,28 @@ export default function AdminUsersPage() {
                     </div>
                   </td>
                   <td className="px-5 py-4">
-                    <select
-                      value={user.role}
-                      onChange={(e) => updateUser(user._id, "change_role", e.target.value)}
-                      disabled={updating === user._id}
-                      className={`px-2.5 py-1 text-xs font-medium rounded-lg capitalize border-0 cursor-pointer ${roleConfig[user.role] || "bg-slate-50 text-slate-700"}`}
-                    >
-                      <option value="student">Student</option>
-                      <option value="teacher">Teacher</option>
-                      <option value="admin">Admin</option>
-                    </select>
+                    {user.isOwner ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-900 text-white">
+                        <HiOutlineShieldCheck className="w-3.5 h-3.5" />
+                        Owner
+                      </span>
+                    ) : viewer.isOwner ? (
+                      <select
+                        value={user.role}
+                        onChange={(e) => updateUser(user._id, "change_role", e.target.value)}
+                        disabled={updating === user._id}
+                        className={`px-2.5 py-1 text-xs font-medium rounded-lg capitalize border-0 cursor-pointer disabled:opacity-60 disabled:cursor-wait ${roleConfig[user.role] || "bg-slate-50 text-slate-700"}`}
+                      >
+                        <option value="student">Student</option>
+                        <option value="teacher">Teacher</option>
+                        <option value="college_admin">College admin</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                    ) : (
+                      <span className={`inline-block px-2.5 py-1 text-xs font-medium rounded-lg capitalize ${roleConfig[user.role] || "bg-slate-50 text-slate-700"}`}>
+                        {user.role.replace("_", " ")}
+                      </span>
+                    )}
                   </td>
                   <td className="px-5 py-4">
                     <span className={`inline-block px-2.5 py-1 text-xs font-medium rounded-lg capitalize ${statusConfig[user.status] || "bg-slate-50 text-slate-700"}`}>
@@ -248,6 +271,9 @@ export default function AdminUsersPage() {
                     )}
                   </td>
                   <td className="px-5 py-4 text-right">
+                    {user.isOwner || user._id === viewer.id || (user.role === "admin" && !viewer.isOwner) ? (
+                      <span className="text-xs text-slate-300">—</span>
+                    ) : (
                     <div className="flex items-center justify-end gap-1">
                       {user.status !== "active" && (
                         <button
@@ -285,6 +311,7 @@ export default function AdminUsersPage() {
                         <HiOutlineTrash className="w-4 h-4" />
                       </button>
                     </div>
+                    )}
                   </td>
                 </tr>
               ))}
