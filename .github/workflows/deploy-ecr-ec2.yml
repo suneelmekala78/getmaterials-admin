@@ -18,13 +18,14 @@ concurrency:
 
 env:
   NODE_VERSION: "20"
-  AWS_REGION: ap-south-1
-  ECR_REPOSITORY: getmaterials-admin
+  AWS_REGION: ap-south-2
+  ECR_REPOSITORY: getmaterials-websites
+  IMAGE_TAG: admin
   CONTAINER_NAME: getmaterials-admin
   CONTAINER_PORT: 3000
   HOST_PORT: 3001
-  DOCKER_NETWORK: getmaterials-net
-  EC2_ENV_DIR: getmaterials-admin
+  DOCKER_NETWORK: getmaterials-websites
+  EC2_ENV_DIR: getmaterials-websites/admin
   NEXT_TELEMETRY_DISABLED: "1"
   CI: "true"
 
@@ -111,8 +112,8 @@ jobs:
         id: meta
         run: |
           IMAGE="${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}"
-          echo "full_image=$IMAGE:${{ github.sha }}" >> "$GITHUB_OUTPUT"
-          echo "latest_image=$IMAGE:latest" >> "$GITHUB_OUTPUT"
+          echo "full_image=$IMAGE:${{ env.IMAGE_TAG }}-${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          echo "latest_image=$IMAGE:${{ env.IMAGE_TAG }}" >> "$GITHUB_OUTPUT"
 
       - name: Build & Push
         uses: docker/build-push-action@v6
@@ -132,7 +133,7 @@ jobs:
         run: rm -f "$RUNNER_TEMP/app.env"
 
 # ===========================================================
-# 3. DEPLOY → EC2  (same instance as the API, single container)
+# 3. DEPLOY → EC2 instance getmaterials-websites
 # ===========================================================
   deploy:
     name: Deploy to EC2
@@ -203,7 +204,6 @@ jobs:
             IMAGE="${{ needs.build-and-push.outputs.full_image }}"
             docker pull "$IMAGE"
 
-            # 5. Shared network with the API (reach it as http://getmaterials-server:4000)
             docker network create ${{ env.DOCKER_NETWORK }} 2>/dev/null || true
 
             # 6. Stop & remove old container
