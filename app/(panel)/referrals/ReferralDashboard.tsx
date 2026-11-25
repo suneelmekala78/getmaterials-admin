@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   Users,
   TrendingUp,
@@ -10,8 +11,10 @@ import {
   Calendar,
   Copy,
   CheckCircle,
+  Eye,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { UserAvatar } from "@/components/UserAvatar";
 
 interface ReferralData {
   totalUsers?: number;
@@ -27,7 +30,14 @@ interface ReferralData {
   }[];
   recentReferrals: {
     id: string;
-    user: { name: string; email: string; role: string } | null;
+    user: {
+      id?: string;
+      name: string;
+      email: string;
+      role: string;
+      status?: string;
+      avatar?: string;
+    } | null;
     source: string;
     medium: string;
     campaign: string;
@@ -41,6 +51,7 @@ interface ReferralData {
       ip?: string;
       country?: string;
       city?: string;
+      region?: string;
       userAgent?: string;
     };
     createdAt: string;
@@ -93,6 +104,28 @@ const sourceColors: Record<string, string> = {
 
 function getSourceColor(source: string) {
   return sourceColors[source] || "bg-violet-100 text-violet-700";
+}
+
+const roleConfig: Record<string, string> = {
+  student: "bg-blue-50 text-blue-700",
+  teacher: "bg-violet-50 text-violet-700",
+  college_admin: "bg-emerald-50 text-emerald-700",
+  admin: "bg-amber-50 text-amber-700",
+};
+
+const statusConfig: Record<string, string> = {
+  active: "bg-emerald-50 text-emerald-700",
+  pending: "bg-amber-50 text-amber-700",
+  suspended: "bg-red-50 text-red-700",
+};
+
+function formatLocation(meta?: {
+  city?: string;
+  region?: string;
+  country?: string;
+}) {
+  if (!meta) return "";
+  return [meta.city, meta.region, meta.country].filter(Boolean).join(", ");
 }
 
 export function ReferralDashboard({ data }: Props) {
@@ -382,27 +415,33 @@ export function ReferralDashboard({ data }: Props) {
         </div>
       )}
 
-      {/* Recent Referrals Table */}
-      <div className="bg-white rounded-2xl border border-slate-100 p-6">
-        <h2 className="text-lg font-bold text-slate-900 mb-4">Recent Signups</h2>
+      {/* Recent Signups — aligned with Users page table */}
+      <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-100">
+          <h2 className="text-lg font-bold text-slate-900">Recent Signups</h2>
+          <p className="text-sm text-slate-500 mt-0.5">
+            Latest accounts with referral attribution (same layout as Users).
+          </p>
+        </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-100">
-                <th className="text-left py-2 px-3 font-semibold text-slate-600 w-12">#</th>
-                <th className="text-left py-2 px-3 font-semibold text-slate-600">User</th>
-                <th className="text-left py-2 px-3 font-semibold text-slate-600">Source</th>
-                <th className="text-left py-2 px-3 font-semibold text-slate-600">Referrer</th>
-                <th className="text-left py-2 px-3 font-semibold text-slate-600">Platform</th>
-                <th className="text-left py-2 px-3 font-semibold text-slate-600">Campaign</th>
-                <th className="text-left py-2 px-3 font-semibold text-slate-600">Landing Page</th>
-                <th className="text-left py-2 px-3 font-semibold text-slate-600">Signed up</th>
+              <tr className="border-b border-slate-100 bg-slate-50/50">
+                <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-12">#</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">User</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Role</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Source</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Referrer</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Signup</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Joined</th>
+                <th className="px-5 py-3.5 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-50">
               {recentReferrals.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-8 text-slate-400">
+                  <td colSpan={9} className="text-center py-10 text-slate-400 text-sm">
                     No referral data yet. Share your referral links to start tracking!
                   </td>
                 </tr>
@@ -410,54 +449,115 @@ export function ReferralDashboard({ data }: Props) {
                 recentReferrals.map((r, index) => {
                   const platform =
                     r.platform || r.signupMeta?.platform || "";
-                  const loc = [r.signupMeta?.city, r.signupMeta?.country]
-                    .filter(Boolean)
-                    .join(", ");
+                  const userId = r.user?.id || r.id;
                   return (
-                  <tr key={r.id} className="border-b border-slate-50 hover:bg-slate-50">
-                    <td className="py-2.5 px-3 text-xs text-slate-400 tabular-nums">
+                  <tr key={r.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-5 py-4 text-xs text-slate-400 tabular-nums">
                       {index + 1}
                     </td>
-                    <td className="py-2.5 px-3">
+                    <td className="px-5 py-4">
                       {r.user ? (
-                        <div>
-                          <p className="font-medium text-slate-800">{r.user.name}</p>
-                          <p className="text-xs text-slate-400">{r.user.email}</p>
+                        <div className="flex items-center gap-3">
+                          <UserAvatar
+                            name={r.user.name}
+                            image={r.user.avatar}
+                            role={r.user.role}
+                            size={36}
+                          />
+                          <div className="min-w-0">
+                            <Link
+                              href={`/users/${userId}`}
+                              className="text-sm font-medium text-slate-900 truncate hover:text-violet-700"
+                            >
+                              {r.user.name}
+                            </Link>
+                            <p className="text-xs text-slate-500 truncate">{r.user.email}</p>
+                          </div>
                         </div>
                       ) : (
-                        <span className="text-slate-400">Deleted user</span>
+                        <span className="text-slate-400 text-sm">Deleted user</span>
                       )}
                     </td>
-                    <td className="py-2.5 px-3">
+                    <td className="px-5 py-4">
+                      {r.user ? (
+                        <span
+                          className={`inline-block px-2.5 py-1 text-xs font-medium rounded-lg capitalize ${
+                            roleConfig[r.user.role] || "bg-slate-50 text-slate-700"
+                          }`}
+                        >
+                          {String(r.user.role || "").replace("_", " ")}
+                        </span>
+                      ) : (
+                        <span className="text-slate-300">—</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-4">
+                      {r.user?.status ? (
+                        <span
+                          className={`inline-block px-2.5 py-1 text-xs font-medium rounded-lg capitalize ${
+                            statusConfig[r.user.status] || "bg-slate-50 text-slate-700"
+                          }`}
+                        >
+                          {r.user.status}
+                        </span>
+                      ) : (
+                        <span className="text-slate-300">—</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-4">
                       <span
                         className={`text-xs font-semibold px-2 py-0.5 rounded-full ${getSourceColor(r.source)}`}
                       >
                         {r.source || "direct"}
                       </span>
-                      {r.medium && (
+                      {r.medium ? (
                         <span className="text-xs text-slate-400 ml-1">/ {r.medium}</span>
-                      )}
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <span className="text-slate-700 font-medium">
-                        {r.referrer || "—"}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 text-xs text-slate-600">
-                      <p className="capitalize">
-                        {[platform, r.signupMeta?.device].filter(Boolean).join(" · ") ||
-                          "—"}
-                      </p>
-                      {loc ? (
-                        <p className="text-slate-400 truncate max-w-[120px]">{loc}</p>
+                      ) : null}
+                      {r.campaign ? (
+                        <p className="text-[11px] text-slate-400 mt-0.5 truncate max-w-[140px]">
+                          {r.campaign}
+                        </p>
                       ) : null}
                     </td>
-                    <td className="py-2.5 px-3 text-slate-600">{r.campaign || "—"}</td>
-                    <td className="py-2.5 px-3 text-slate-400 text-xs max-w-[120px] truncate">
-                      {r.landingPage}
+                    <td className="px-5 py-4 text-sm text-slate-700 font-medium">
+                      {r.referrer || "—"}
                     </td>
-                    <td className="py-2.5 px-3 text-xs text-slate-500 whitespace-nowrap">
+                    <td className="px-5 py-4 text-xs text-slate-500">
+                      {r.signupMeta || platform ? (
+                        <div className="space-y-0.5 max-w-[180px]">
+                          <p className="capitalize">
+                            {[platform, r.signupMeta?.device]
+                              .filter(Boolean)
+                              .join(" · ") || "—"}
+                          </p>
+                          {formatLocation(r.signupMeta) ? (
+                            <p className="text-slate-400 truncate">
+                              {formatLocation(r.signupMeta)}
+                            </p>
+                          ) : null}
+                          {r.signupMeta?.ip ? (
+                            <p className="text-slate-400 font-mono text-[10px]">
+                              {r.signupMeta.ip}
+                            </p>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <span className="text-slate-300">—</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-4 text-xs text-slate-500 whitespace-nowrap">
                       {formatDisplayDateTime(r.createdAt)}
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      {userId ? (
+                        <Link
+                          href={`/users/${userId}`}
+                          className="inline-flex p-2 text-violet-500 hover:text-violet-700 hover:bg-violet-50 rounded-lg transition-colors"
+                          title="View user"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Link>
+                      ) : null}
                     </td>
                   </tr>
                   );

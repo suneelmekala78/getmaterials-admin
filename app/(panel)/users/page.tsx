@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { HiOutlineUsers, HiOutlineSearch, HiOutlineShieldCheck, HiOutlineBan, HiOutlineTrash, HiOutlineCheckCircle } from "react-icons/hi";
+import Link from "next/link";
+import { HiOutlineUsers, HiOutlineSearch, HiOutlineShieldCheck, HiOutlineBan, HiOutlineTrash, HiOutlineCheckCircle, HiOutlineEye, HiOutlinePencil } from "react-icons/hi";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { UserAvatar } from "@/components/UserAvatar";
 import toast from "react-hot-toast";
@@ -210,7 +211,9 @@ export default function AdminUsersPage() {
                     <div className="flex items-center gap-3">
                       <UserAvatar name={user.name} image={user.avatar} role={user.role} size={36} />
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-slate-900 truncate">{user.name}</p>
+                        <Link href={`/users/${user._id}`} className="text-sm font-medium text-slate-900 truncate hover:text-violet-700">
+                          {user.name}
+                        </Link>
                         <p className="text-xs text-slate-500 truncate">{user.email}</p>
                       </div>
                     </div>
@@ -271,10 +274,23 @@ export default function AdminUsersPage() {
                     )}
                   </td>
                   <td className="px-5 py-4 text-right">
-                    {user.isOwner || user._id === viewer.id || (user.role === "admin" && !viewer.isOwner) ? (
-                      <span className="text-xs text-slate-300">—</span>
-                    ) : (
                     <div className="flex items-center justify-end gap-1">
+                      <Link
+                        href={`/users/${user._id}`}
+                        className="p-2 text-violet-500 hover:text-violet-700 hover:bg-violet-50 rounded-lg transition-colors"
+                        title="View details"
+                      >
+                        <HiOutlineEye className="w-4 h-4" />
+                      </Link>
+                      <Link
+                        href={`/users/${user._id}?edit=campus`}
+                        className="p-2 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors"
+                        title="Edit / assign college"
+                      >
+                        <HiOutlinePencil className="w-4 h-4" />
+                      </Link>
+                    {user.isOwner || user._id === viewer.id || (user.role === "admin" && !viewer.isOwner) ? null : (
+                    <>
                       {user.status !== "active" && (
                         <button
                           onClick={() => updateUser(user._id, "activate")}
@@ -310,8 +326,9 @@ export default function AdminUsersPage() {
                       >
                         <HiOutlineTrash className="w-4 h-4" />
                       </button>
-                    </div>
+                    </>
                     )}
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -26,7 +26,7 @@ export default async function AdminMaterialsPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Materials</h1>
           <p className="text-slate-500 mt-1">
-            Assign any uploaded material to one or more colleges, including posts from students and teachers.
+            View every material — drafts, under review, and published. Assign colleges, edit details, or open a full preview.
           </p>
         </div>
         <div className="flex items-center gap-3 text-sm text-slate-600 bg-white px-4 py-2 rounded-xl border border-slate-200">

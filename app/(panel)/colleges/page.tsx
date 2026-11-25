@@ -259,22 +259,44 @@ export default function AdminCollegesPage() {
 
   // Program management
   const handleAddProgram = async (collegeId: string) => {
-    if (!programForm.key || !programForm.label || busyAction) return;
+    if (busyAction === `program-${collegeId}`) return;
+
+    const label = programForm.label.trim();
+    const key = (programForm.key.trim() || label)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+    if (!label && !programForm.key.trim()) {
+      toast.error("Enter a program label (e.g. B.Tech) or key (e.g. btech)");
+      return;
+    }
+    if (!key) {
+      toast.error("Program key must use letters or numbers (e.g. btech)");
+      return;
+    }
+
     setBusyAction(`program-${collegeId}`);
     try {
       const res = await fetch(`/api/colleges/programs`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ collegeId, ...programForm }),
+        body: JSON.stringify({
+          collegeId,
+          key,
+          label: label || key,
+          durationYears: Number(programForm.durationYears) || 4,
+          totalSemesters: Number(programForm.totalSemesters) || 8,
+        }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Failed to add program");
       toast.success("Program added");
       setShowProgramForm(null);
       setProgramForm({ key: "", label: "", durationYears: 4, totalSemesters: 8 });
       fetchColleges();
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(err?.message || "Failed to add program");
     } finally {
       setBusyAction(null);
     }
@@ -301,7 +323,11 @@ export default function AdminCollegesPage() {
 
   // Branch management
   const handleAddBranch = async (collegeId: string) => {
-    if (!branchForm.program || !branchForm.name || busyAction) return;
+    if (busyAction === `branch-${collegeId}`) return;
+    if (!branchForm.program || !branchForm.name) {
+      toast.error("Select a program and enter a branch name");
+      return;
+    }
     setBusyAction(`branch-${collegeId}`);
     try {
       const sections = branchForm.sections.split(",").map(s => s.trim()).filter(Boolean);
@@ -344,7 +370,11 @@ export default function AdminCollegesPage() {
 
   // Batch management
   const handleAddBatch = async (collegeId: string) => {
-    if (!batchForm.program || !batchForm.startYear || !batchForm.endYear || busyAction) return;
+    if (busyAction === `batch-${collegeId}`) return;
+    if (!batchForm.program || !batchForm.startYear || !batchForm.endYear) {
+      toast.error("Select a program and set start/end years");
+      return;
+    }
     setBusyAction(`batch-${collegeId}`);
     try {
       const res = await fetch(`/api/colleges/batches`, {
@@ -398,7 +428,14 @@ export default function AdminCollegesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Colleges</h1>
-          <p className="text-slate-500 mt-1">Manage colleges, programs, branches, sections & batches.</p>
+          <p className="text-slate-500 mt-1">
+            Manage colleges, programs, branches, sections &amp; batches. College programs: expand a college →{" "}
+            <span className="font-medium text-slate-700">Add Program</span>. Platform-wide defaults:{" "}
+            <a href="/programs" className="text-violet-600 font-medium hover:underline">
+              Default Programs
+            </a>
+            .
+          </p>
         </div>
         <button
           onClick={() => { resetForm(); setShowForm(!showForm); }}
@@ -591,19 +628,88 @@ export default function AdminCollegesPage() {
                         <h4 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                           <GraduationCap className="w-4 h-4 text-violet-500" /> Programs
                         </h4>
-                        <button onClick={() => setShowProgramForm(showProgramForm === college._id ? null : college._id)} className="text-xs text-violet-600 hover:text-violet-700 font-medium flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setShowProgramForm(showProgramForm === college._id ? null : college._id)
+                          }
+                          className="text-xs text-violet-600 hover:text-violet-700 font-medium flex items-center gap-1"
+                        >
                           <Plus className="w-3 h-3" /> Add Program
                         </button>
                       </div>
                       {showProgramForm === college._id && (
                         <div className="bg-slate-50 rounded-xl p-4 mb-3 space-y-3">
                           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                            <input type="text" value={programForm.key} onChange={(e) => setProgramForm({ ...programForm, key: e.target.value })} placeholder="Key (e.g., btech)" className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500" />
-                            <input type="text" value={programForm.label} onChange={(e) => setProgramForm({ ...programForm, label: e.target.value })} placeholder="Label (e.g., B.Tech)" className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500" />
-                            <input type="number" value={programForm.durationYears} onChange={(e) => setProgramForm({ ...programForm, durationYears: parseInt(e.target.value) || 4 })} placeholder="Years" min={1} max={10} className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500" />
-                            <input type="number" value={programForm.totalSemesters} onChange={(e) => setProgramForm({ ...programForm, totalSemesters: parseInt(e.target.value) || 8 })} placeholder="Semesters" min={1} max={20} className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500" />
+                            <input
+                              type="text"
+                              value={programForm.label}
+                              onChange={(e) => {
+                                const nextLabel = e.target.value;
+                                setProgramForm((prev) => ({
+                                  ...prev,
+                                  label: nextLabel,
+                                  // Keep key in sync until the admin edits it manually.
+                                  key:
+                                    !prev.key ||
+                                    prev.key ===
+                                      prev.label
+                                        .toLowerCase()
+                                        .replace(/[^a-z0-9]+/g, "-")
+                                        .replace(/^-+|-+$/g, "")
+                                      ? nextLabel
+                                          .toLowerCase()
+                                          .replace(/[^a-z0-9]+/g, "-")
+                                          .replace(/^-+|-+$/g, "")
+                                      : prev.key,
+                                }));
+                              }}
+                              placeholder="Label (e.g., B.Tech)"
+                              className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500"
+                            />
+                            <input
+                              type="text"
+                              value={programForm.key}
+                              onChange={(e) =>
+                                setProgramForm({ ...programForm, key: e.target.value })
+                              }
+                              placeholder="Key (e.g., btech)"
+                              className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 font-mono"
+                            />
+                            <input
+                              type="number"
+                              value={programForm.durationYears}
+                              onChange={(e) =>
+                                setProgramForm({
+                                  ...programForm,
+                                  durationYears: parseInt(e.target.value) || 4,
+                                })
+                              }
+                              placeholder="Years"
+                              min={1}
+                              max={10}
+                              className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500"
+                            />
+                            <input
+                              type="number"
+                              value={programForm.totalSemesters}
+                              onChange={(e) =>
+                                setProgramForm({
+                                  ...programForm,
+                                  totalSemesters: parseInt(e.target.value) || 8,
+                                })
+                              }
+                              placeholder="Semesters"
+                              min={1}
+                              max={20}
+                              className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-violet-500"
+                            />
                           </div>
+                          <p className="text-[11px] text-slate-400">
+                            Label is required. Key is auto-filled from the label and used in filters.
+                          </p>
                           <button
+                            type="button"
                             onClick={() => handleAddProgram(college._id)}
                             disabled={busyAction === `program-${college._id}`}
                             className="px-4 py-2 bg-violet-600 text-white text-xs font-medium rounded-lg hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed"

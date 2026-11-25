@@ -137,18 +137,18 @@ const DESC_MAX = 3000;
 const TAG_MAX = 10;
 const FILE_MAX_MB = 100;
 
-const programs = [
-  { key: "btech", label: "B.Tech" },
-  { key: "mtech", label: "M.Tech" },
-  { key: "mca", label: "MCA" },
-  { key: "bca", label: "BCA" },
-  { key: "bsc", label: "B.Sc" },
-  { key: "msc", label: "M.Sc" },
-  { key: "mba", label: "MBA" },
-  { key: "bba", label: "BBA" },
-  { key: "diploma", label: "Diploma" },
-  { key: "phd", label: "Ph.D" },
-  { key: "other", label: "Other" },
+const FALLBACK_PROGRAMS = [
+  { key: "btech", label: "B.Tech", durationYears: 4, totalSemesters: 8 },
+  { key: "mtech", label: "M.Tech", durationYears: 2, totalSemesters: 4 },
+  { key: "mca", label: "MCA", durationYears: 2, totalSemesters: 4 },
+  { key: "bca", label: "BCA", durationYears: 3, totalSemesters: 6 },
+  { key: "bsc", label: "B.Sc", durationYears: 3, totalSemesters: 6 },
+  { key: "msc", label: "M.Sc", durationYears: 2, totalSemesters: 4 },
+  { key: "mba", label: "MBA", durationYears: 2, totalSemesters: 4 },
+  { key: "bba", label: "BBA", durationYears: 3, totalSemesters: 6 },
+  { key: "diploma", label: "Diploma", durationYears: 3, totalSemesters: 6 },
+  { key: "phd", label: "Ph.D", durationYears: 3, totalSemesters: 6 },
+  { key: "other", label: "Other", durationYears: 4, totalSemesters: 8 },
 ];
 
 const materialTypes: { value: AttachmentType; label: string; icon: typeof FileText; color: string }[] = [
@@ -264,6 +264,7 @@ export function MaterialForm({
   const [collegeQuery, setCollegeQuery] = useState("");
   const [collegeOpen, setCollegeOpen] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [defaultPrograms, setDefaultPrograms] = useState(FALLBACK_PROGRAMS);
   const filesRef = useRef<Map<string, File>>(new Map());
 
   const [showAddSubject, setShowAddSubject] = useState(false);
@@ -280,6 +281,17 @@ export function MaterialForm({
     setThumbnailPreview(initialMaterial.thumbnailUrl || "");
     setKeepThumbnailUrl(initialMaterial.thumbnailUrl || "");
   }, [initialMaterial?.id, initialMaterial?.thumbnailUrl]);
+
+  useEffect(() => {
+    fetch("/api/programs")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data.programs) && data.programs.length) {
+          setDefaultPrograms(data.programs);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const filteredChapters = chapters.filter((c) => c.subject === formData.subject);
   const selectedColleges = colleges.filter((c) => formData.collegeIds.includes(c.id));
@@ -964,12 +976,31 @@ export function MaterialForm({
                 className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm bg-white"
               >
                 <option value="">Any program</option>
-                {(collegePrograms.length ? collegePrograms : programs).map((p: any) => (
+                {(collegePrograms.length ? collegePrograms : defaultPrograms).map((p: any) => (
                   <option key={p.key} value={p.key}>
                     {p.label}
                   </option>
                 ))}
               </select>
+              <p className="text-[11px] text-slate-400 mt-1.5">
+                {collegePrograms.length ? (
+                  <>
+                    Programs come from the selected college. Add more under{" "}
+                    <a href="/colleges" className="text-violet-600 hover:text-violet-700 font-medium">
+                      Colleges
+                    </a>
+                    .
+                  </>
+                ) : (
+                  <>
+                    Showing platform defaults. Manage them in{" "}
+                    <a href="/programs" className="text-violet-600 hover:text-violet-700 font-medium">
+                      Default Programs
+                    </a>
+                    , or pick a college for college-specific programs.
+                  </>
+                )}
+              </p>
             </div>
             <div className="sm:col-span-2">
               <label className="block text-sm font-medium text-slate-700 mb-1.5">

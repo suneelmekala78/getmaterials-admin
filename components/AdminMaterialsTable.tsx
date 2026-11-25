@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Building2, FileText, Link2, Pencil, Search, Trash2, Video } from "lucide-react";
+import { Building2, Eye, FileText, Link2, Pencil, Search, Trash2, Video } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { AssignCollegesModal, collegeLabels } from "@/components/AssignCollegesModal";
 import toast from "react-hot-toast";
@@ -51,6 +51,7 @@ export function AdminMaterialsTable({
   const [rows, setRows] = useState(materials);
   const [selected, setSelected] = useState<string[]>([]);
   const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "published" | "under_review" | "draft">("all");
   const [assignFor, setAssignFor] = useState<Material | "bulk" | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -60,16 +61,26 @@ export function AdminMaterialsTable({
     setRows(materials);
   }, [materials]);
 
+  const statusCounts = useMemo(() => {
+    return {
+      all: rows.length,
+      published: rows.filter((item) => item.status === "published").length,
+      under_review: rows.filter((item) => item.status === "under_review").length,
+      draft: rows.filter((item) => item.status === "draft").length,
+    };
+  }, [rows]);
+
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return rows;
     return rows.filter((material) => {
+      if (statusFilter !== "all" && material.status !== statusFilter) return false;
+      if (!q) return true;
       const colleges = collegeLabels(material).join(" ");
       return `${material.title} ${material.uploadedBy?.name || ""} ${material.subject?.name || ""} ${colleges}`
         .toLowerCase()
         .includes(q);
     });
-  }, [rows, query]);
+  }, [rows, query, statusFilter]);
 
   const toggleAll = (checked: boolean) => {
     setSelected(checked ? visible.map((item) => String(item._id)) : []);
@@ -158,6 +169,31 @@ export function AdminMaterialsTable({
 
   return (
     <>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {(
+          [
+            ["all", "All"],
+            ["published", "Published"],
+            ["under_review", "Under review"],
+            ["draft", "Drafts"],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setStatusFilter(key)}
+            className={`rounded-2xl border px-4 py-3 text-left transition ${
+              statusFilter === key
+                ? "border-violet-300 bg-violet-50"
+                : "border-slate-200 bg-white hover:border-slate-300"
+            }`}
+          >
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">{label}</p>
+            <p className="mt-1 text-xl font-bold text-slate-900">{statusCounts[key]}</p>
+          </button>
+        ))}
+      </div>
+
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -256,6 +292,14 @@ export function AdminMaterialsTable({
                       <div className="flex items-center gap-1 justify-end">
                         <button
                           type="button"
+                          onClick={() => router.push(`/materials/${id}`)}
+                          className="p-2 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg"
+                          title="View material"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => setAssignFor(material)}
                           className="p-2 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg"
                           title="Assign colleges"
@@ -266,6 +310,7 @@ export function AdminMaterialsTable({
                           type="button"
                           onClick={() => router.push(`/materials/${id}/edit`)}
                           className="p-2 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg"
+                          title="Edit material"
                         >
                           <Pencil className="w-4 h-4" />
                         </button>
@@ -273,6 +318,7 @@ export function AdminMaterialsTable({
                           type="button"
                           onClick={() => setDeleteId(id)}
                           className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                          title="Delete material"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
